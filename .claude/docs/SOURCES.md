@@ -79,66 +79,57 @@
 
 ---
 
-## 待補強：AI / Claude Code
+## AI / Claude Code（2026-01-11 更新）
 
-### 必追（高信號）
+### 已加入 ✅
 
-| 來源 | 類型 | RSS/連結 | 狀態 |
-|------|------|----------|------|
-| Anthropic Blog | 官方 | https://www.anthropic.com/news | [ ] 待加入 |
-| Latent Space | Newsletter | https://www.latent.space/ | [ ] 待加入 |
-| The Rundown AI | Newsletter | https://www.therundown.ai/ | [ ] 待加入 |
+| 來源 | 類型 | RSS/連結 | 推播時段 |
+|------|------|----------|----------|
+| Simon Willison's Weblog | Blog | simonwillison.net | 06:00 AI |
+| Import AI | Newsletter | importai.substack.com | 06:00 AI |
+| Latent Space | Newsletter | latent.space | 06:00 AI |
+| Anthropic Blog | 官方 | anthropic.com/news | 06:00 AI |
+| Ben's Bites | Newsletter | bensbites.beehiiv.com | 06:00 AI |
 
-### 值得關注
+### 待觀察
 
 | 來源 | 類型 | 連結 | 狀態 |
 |------|------|------|------|
+| The Neuron | Newsletter | theneurondaily.com | [ ] 待評估 |
 | @alexalbert__ | Twitter | Claude prompting 專家 | [ ] 待評估 |
-| AI Engineer Newsletter (Swyx) | Newsletter | https://www.latent.space/ai-engineer | [ ] 待評估 |
-| Interconnects (Nathan Lambert) | Newsletter | https://www.interconnects.ai/ | [ ] 待評估 |
-
-### GitHub 來源
-
-| 來源 | 類型 | RSS 連結 | 狀態 |
-|------|------|----------|------|
-| anthropics/claude-code Releases | Release | `rsshub.app/github/release/anthropics/claude-code` | [ ] 待加入 |
-| anthropics/claude-code Discussions | 社群 | 手動關注或 GitHub Notifications | [ ] 待評估 |
-| GitHub Trending (AI/ML) | 每日精選 | `rsshub.app/github/trending/daily/any/any` | [ ] 待評估 |
-
-### 探索性
-
-| 來源 | 類型 | 說明 | 狀態 |
-|------|------|------|------|
-| HN AI Filter | RSShub | Hacker News AI 相關 | [ ] 待評估 |
-| r/ClaudeAI | Reddit | 社群用法分享 | [ ] 待評估 |
+| Interconnects (Nathan Lambert) | Newsletter | interconnects.ai | [ ] 待評估 |
 
 ---
 
-## 待補強：國際情勢
+## GitHub 專案（2026-01-11 新增）
 
-### 必追（高信號）
+### 已加入 ✅
 
-| 來源 | 類型 | 連結 | 狀態 |
-|------|------|------|------|
-| The Economist Espresso | App | 每日 5 則全球要聞 | [ ] 待加入 |
-| 敏迪選讀 | Newsletter | 台灣視角國際新聞首選 | [ ] 待加入 |
-| Foreign Affairs | 期刊 | 深度地緣政治 | [ ] 待加入 |
+| 來源 | 類型 | RSS 連結 | 推播時段 |
+|------|------|----------|----------|
+| GitHub Trending (Python) | 每日精選 | mshibanami.github.io/GitHubTrendingRSS | 08:00 GitHub |
+| anthropics/claude-code Releases | Release | github.com/.../releases.atom | 08:00 GitHub |
 
-### 值得關注
+---
+
+## 國際情勢（2026-01-11 更新）
+
+### 已加入 ✅
+
+| 來源 | 類型 | 連結 | 推播時段 |
+|------|------|------|----------|
+| Foreign Affairs | 期刊 | foreignaffairs.com | 07:00 國際 |
+| Foreign Policy | 雜誌 | foreignpolicy.com | 07:00 國際 |
+| 敏迪選讀 | Newsletter | 台灣視角國際新聞 | 07:00 國際 |
+| Project Syndicate | 評論 | project-syndicate.org | 07:00 國際 |
+
+### 待觀察
 
 | 來源 | 類型 | 連結 | 狀態 |
 |------|------|------|------|
 | 轉角國際 | 中文 | udn 旗下國際深度 | [ ] 待評估 |
 | 報導者 - 國際 | 中文 | 獨立媒體國際專題 | [ ] 待評估 |
-| Noema Magazine | 英文 | 思想性全球議題 | [ ] 待評估 |
 | The Wire China | 英文 | 中國議題深度 | [ ] 待評估 |
-
-### 台灣/兩岸
-
-| 來源 | 類型 | 連結 | 狀態 |
-|------|------|------|------|
-| 菜市場政治學 | 部落格 | 台灣政治分析 | [ ] 待評估 |
-| US-Taiwan Watch | Newsletter | 美台關係 | [ ] 待評估 |
 
 ---
 

@@ -271,9 +271,82 @@ python scripts/daily_digest.py --no-ai
 - [x] 完成所有自動化腳本
 - [x] 測試完整推播流程
 - [x] 更新 allow 設定
-- [ ] 設定每日定時執行（Windows Task Scheduler 或其他）
+- [x] 設定每日定時執行（GitHub Actions）
 - [ ] 建立 HEPTABASE-TEMPLATES.md
 - [ ] 觀察 1-2 週，調整 AI 篩選參數
+
+---
+
+## Session: 2026-01-11 深夜續 - 分領域推播 + GitHub Actions
+
+### 變更摘要
+- 討論並確認全球頂級訊息源
+- 新增分領域推播功能
+- 建立 GitHub Actions 自動排程
+- 測試 GitHub 領域推播成功
+
+### 決策記錄
+
+**訊息源更新**：
+- AI 領域（5 個）：Simon Willison, Import AI, Latent Space, Anthropic Blog, Ben's Bites
+- 國際情勢（4 個）：Foreign Affairs, Foreign Policy, 敏迪選讀, Project Syndicate
+- GitHub（2 個）：GitHub Trending RSS, claude-code releases
+- 醫學：維持使用 PubMed Pipedream，不加入 Reader
+
+**分領域推播時間**：
+| 時間 | 領域 |
+|------|------|
+| 06:00 | 🤖 AI |
+| 07:00 | 🌍 國際 |
+| 08:00 | 💻 GitHub |
+| 12:00 | 📚 知識 |
+
+**部署方案**：
+- 選擇 GitHub Actions（免費、簡單、可靠）
+- 使用 cron 排程觸發
+- 支援手動執行特定領域
+
+### 測試結果
+- GitHub 領域推播：成功（34 篇 → 精選 8 篇）
+- AI 領域測試：成功（3 篇，部分 RSS 無更新）
+
+### 產出文件
+- `scripts/domain_digest.py` - 分領域推播腳本
+- `.github/workflows/daily-digest.yml` - GitHub Actions 設定
+- `requirements.txt` - 新增 feedparser
+- `.claude/docs/SOURCES.md` - 更新訊息源清單
+
+### GitHub Actions 部署步驟
+1. 推送到 GitHub 後，進入 Settings → Secrets and variables → Actions
+2. 新增以下 secrets：
+   - `READWISE_TOKEN`
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+   - `ANTHROPIC_API_KEY`
+3. Actions 會自動按排程執行
+
+### 使用方式
+```bash
+# 列出領域
+python scripts/domain_digest.py --list
+
+# 測試特定領域
+python scripts/domain_digest.py ai --dry-run
+
+# 正式推播
+python scripts/domain_digest.py github
+
+# 推播所有領域
+python scripts/domain_digest.py all
+```
+
+### 待辦事項
+- [x] 確認訊息源
+- [x] 建立分領域推播
+- [x] 建立 GitHub Actions
+- [x] 測試推播
+- [ ] 推送到 GitHub 並設定 Secrets
+- [ ] 建立 HEPTABASE-TEMPLATES.md
 
 ---
 
