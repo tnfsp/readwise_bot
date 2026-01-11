@@ -350,4 +350,50 @@ python scripts/domain_digest.py all
 
 ---
 
+## Session: 2026-01-12 - AI 摘要 + Reddit 整合
+
+### 變更摘要
+- 新增醫學領域推播（PubMed RSS）
+- 新增 Readwise 每日精選排程（台灣 20:00）
+- AI 篩選功能增強：每篇文章都產生重點摘要（💡）
+- 整合 Reddit 訊息源到 AI、國際、GitHub/開發 領域
+- 修復 AI 摘要未顯示的問題（JSON markdown 包裝處理）
+
+### 決策記錄
+
+**AI 摘要增強**：
+- 原本 AI 只做「篩選」（選擇文章）
+- 現在加入「摘要」：每篇文章產生一句話重點，幫助判斷是否要點進去
+- 使用 JSON 格式回傳：`{"selected": [...], "highlights": {...}}`
+
+**Reddit 訊息源**：
+- AI 領域：r/MachineLearning, r/LocalLLaMA, r/ClaudeAI, r/ChatGPT, r/artificial
+- 國際領域：r/geopolitics, r/worldnews
+- GitHub/開發：r/programming, r/webdev, r/Python
+- 使用每日熱門（`/top/.rss?t=day`）而非最新文章
+
+**推播排程更新**：
+| 時間 | 領域 |
+|------|------|
+| 05:30 | 🏥 醫學 |
+| 06:00 | 🤖 AI |
+| 07:00 | 🌍 國際 |
+| 08:00 | 💻 GitHub/開發 |
+| 12:00 | 📚 知識 |
+| 20:00 | 📖 Readwise 精選 |
+
+### 產出/修改文件
+- `scripts/domain_digest.py` - 增強 AI 摘要、新增 Reddit feeds
+- `.github/workflows/daily-digest.yml` - 新增醫學、Readwise 排程
+
+### 待辦事項
+- [x] 新增醫學領域
+- [x] 新增 Readwise 排程
+- [x] AI 摘要功能
+- [x] Reddit 訊息源
+- [ ] 推送到 GitHub 並設定 Secrets
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->

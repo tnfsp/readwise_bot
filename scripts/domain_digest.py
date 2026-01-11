@@ -2,7 +2,7 @@
 分領域推播系統
 
 根據不同領域從 RSS 獲取內容並推播到 Telegram
-支援的領域：AI, 國際, GitHub, 知識
+支援的領域：醫學, AI, 國際, GitHub, 知識
 """
 import sys
 import argparse
@@ -23,6 +23,16 @@ from config import (
 
 # 領域配置
 DOMAIN_CONFIG = {
+    "medical": {
+        "name": "醫學",
+        "emoji": "🏥",
+        "feeds": [
+            {"name": "PubMed (ECMO/VAD/Cardiac)", "url": "https://pubmed.ncbi.nlm.nih.gov/rss/search/1V_PRf-wigmmSOdeKS_0FLDNjB4gkI0R2Ppj3T0WTkRZDZugxK/?limit=15&utm_campaign=pubmed-2&fc=20250126040620"},
+        ],
+        "max_items": 10,
+        "use_ai_filter": True,
+        "default_hours": 48  # PubMed 更新較慢，使用 48 小時
+    },
     "ai": {
         "name": "AI",
         "emoji": "🤖",
@@ -32,8 +42,14 @@ DOMAIN_CONFIG = {
             {"name": "Latent Space", "url": "https://www.latent.space/feed"},
             {"name": "Import AI", "url": "https://importai.substack.com/feed"},
             {"name": "Ben's Bites", "url": "https://bensbites.beehiiv.com/feed"},
+            # Reddit
+            {"name": "r/MachineLearning", "url": "https://www.reddit.com/r/MachineLearning/top/.rss?t=day"},
+            {"name": "r/LocalLLaMA", "url": "https://www.reddit.com/r/LocalLLaMA/top/.rss?t=day"},
+            {"name": "r/ClaudeAI", "url": "https://www.reddit.com/r/ClaudeAI/top/.rss?t=day"},
+            {"name": "r/ChatGPT", "url": "https://www.reddit.com/r/ChatGPT/top/.rss?t=day"},
+            {"name": "r/artificial", "url": "https://www.reddit.com/r/artificial/top/.rss?t=day"},
         ],
-        "max_items": 8,
+        "max_items": 10,
         "use_ai_filter": True
     },
     "international": {
@@ -43,20 +59,27 @@ DOMAIN_CONFIG = {
             {"name": "Foreign Affairs", "url": "https://www.foreignaffairs.com/rss.xml"},
             {"name": "Foreign Policy", "url": "https://foreignpolicy.com/feed/"},
             {"name": "Project Syndicate", "url": "https://www.project-syndicate.org/rss"},
+            # Reddit
+            {"name": "r/geopolitics", "url": "https://www.reddit.com/r/geopolitics/top/.rss?t=day"},
+            {"name": "r/worldnews", "url": "https://www.reddit.com/r/worldnews/top/.rss?t=day"},
         ],
-        "max_items": 6,
+        "max_items": 8,
         "use_ai_filter": True
     },
     "github": {
-        "name": "GitHub",
+        "name": "GitHub/開發",
         "emoji": "💻",
         "feeds": [
             {"name": "GitHub Trending (Python)", "url": "https://mshibanami.github.io/GitHubTrendingRSS/daily/python.xml"},
             {"name": "GitHub Trending (All)", "url": "https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml"},
             {"name": "Claude Code Releases", "url": "https://github.com/anthropics/claude-code/releases.atom"},
+            # Reddit
+            {"name": "r/programming", "url": "https://www.reddit.com/r/programming/top/.rss?t=day"},
+            {"name": "r/webdev", "url": "https://www.reddit.com/r/webdev/top/.rss?t=day"},
+            {"name": "r/Python", "url": "https://www.reddit.com/r/Python/top/.rss?t=day"},
         ],
-        "max_items": 8,
-        "use_ai_filter": False  # GitHub 不需要 AI 過濾
+        "max_items": 10,
+        "use_ai_filter": True
     },
     "knowledge": {
         "name": "知識/生產力",
@@ -144,21 +167,24 @@ def fetch_domain_articles(domain: str, hours: int = 24) -> List[Dict]:
 
 def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> List[Dict]:
     """
-    使用 AI 篩選文章
+    使用 AI 篩選文章並產生摘要
     """
     if not articles:
         return []
 
     import anthropic
+    import json
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-    # 準備文章列表
+    # 準備文章列表（包含摘要以提供更多上下文）
     articles_text = []
     for i, article in enumerate(articles[:20]):
-        articles_text.append(f"{i+1}. [{article.get('source')}] {article.get('title')}")
+        summary = article.get('summary', '')[:100] if article.get('summary') else ''
+        articles_text.append(f"{i+1}. [{article.get('source')}] {article.get('title')}\n   摘要: {summary}")
 
     domain_context = {
+        "medical": "ECMO、VAD、心臟外科、重症醫學相關",
         "ai": "AI、LLM、Claude、機器學習、深度學習相關",
         "international": "國際情勢、地緣政治、全球事務相關",
         "knowledge": "知識管理、生產力、學習方法、筆記工具相關"
@@ -169,21 +195,54 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
 文章列表：
 {chr(10).join(articles_text)}
 
-請回覆選中的文章編號，用逗號分隔，例如：1,3,5,7
-只回覆編號，不要其他說明。"""
+請用 JSON 格式回覆，包含：
+1. 選中的文章編號
+2. 每篇文章的一句話重點（說明為什麼重要/有趣，讓讀者決定是否要點進去看）
+
+格式範例：
+{{"selected": [1, 3, 5], "highlights": {{"1": "首個...", "3": "突破...", "5": "最新..."}}}}
+
+只回覆 JSON，不要其他說明。"""
 
     try:
         message = client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=100,
+            max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
 
         response = message.content[0].text.strip()
-        selected_indices = [int(x.strip()) - 1 for x in response.split(",") if x.strip().isdigit()]
 
-        filtered = [articles[i] for i in selected_indices if 0 <= i < len(articles)]
-        return filtered[:max_items]
+        # 移除 markdown 程式碼區塊包裝
+        if response.startswith("```"):
+            lines = response.split("\n")
+            # 移除首行 ```json 和尾行 ```
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            response = "\n".join(lines)
+
+        # 嘗試解析 JSON
+        try:
+            data = json.loads(response)
+            selected_indices = [int(x) - 1 for x in data.get("selected", [])]
+            highlights = data.get("highlights", {})
+
+            filtered = []
+            for i in selected_indices:
+                if 0 <= i < len(articles):
+                    article = articles[i].copy()
+                    # 加入 AI 生成的重點摘要
+                    article["highlight"] = highlights.get(str(i + 1), "")
+                    filtered.append(article)
+
+            return filtered[:max_items]
+        except json.JSONDecodeError:
+            # 如果 JSON 解析失敗，嘗試舊格式（純編號）
+            selected_indices = [int(x.strip()) - 1 for x in response.split(",") if x.strip().isdigit()]
+            filtered = [articles[i] for i in selected_indices if 0 <= i < len(articles)]
+            return filtered[:max_items]
 
     except Exception as e:
         print(f"  AI filter error: {e}")
@@ -210,8 +269,11 @@ def format_domain_message(articles: List[Dict], domain: str, date_str: str) -> s
 
         source = article.get("source", "")
         link = article.get("link", "")
+        highlight = article.get("highlight", "")
 
         lines.append(f"• <b>{title}</b>")
+        if highlight:
+            lines.append(f"  💡 {highlight}")
         if source:
             lines.append(f"  📍 {source}")
         if link:
@@ -236,13 +298,13 @@ def send_telegram_message(text: str) -> bool:
     return response.status_code == 200
 
 
-def run_domain_digest(domain: str, hours: int = 24, dry_run: bool = False):
+def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):
     """
     執行特定領域的推播
 
     Args:
         domain: 領域名稱
-        hours: 獲取過去幾小時的文章
+        hours: 獲取過去幾小時的文章（若未指定則使用領域預設值）
         dry_run: 測試模式
     """
     config = DOMAIN_CONFIG.get(domain)
@@ -251,10 +313,14 @@ def run_domain_digest(domain: str, hours: int = 24, dry_run: bool = False):
         print(f"Available domains: {', '.join(DOMAIN_CONFIG.keys())}")
         return False
 
+    # 使用領域預設時間窗口或預設 24 小時
+    if hours is None:
+        hours = config.get("default_hours", 24)
+
     print("=" * 60)
     print(f"領域推播：{config['emoji']} {config['name']}")
     print(f"時間：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print(f"模式：{'測試' if dry_run else '正式'}")
+    print(f"模式：{'測試' if dry_run else '正式'}，時間窗口：{hours}h")
     print("=" * 60)
 
     # 1. 獲取文章
@@ -268,9 +334,9 @@ def run_domain_digest(domain: str, hours: int = 24, dry_run: bool = False):
             send_telegram_message(f"{config['emoji']} <b>{config['name']}</b>\n\n過去 {hours} 小時沒有新內容。")
         return True
 
-    # 2. 篩選
+    # 2. 篩選並產生摘要
     print(f"\n[2/3] 篩選文章...")
-    if config.get("use_ai_filter") and len(articles) > config["max_items"]:
+    if config.get("use_ai_filter"):
         print("  使用 AI 篩選...")
         filtered = ai_filter_articles(articles, domain, config["max_items"])
     else:
@@ -311,9 +377,9 @@ def run_all_domains(dry_run: bool = False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="分領域推播系統")
     parser.add_argument("domain", nargs="?", default="all",
-                       help="領域名稱 (ai, international, github, knowledge, all)")
-    parser.add_argument("--hours", type=int, default=24,
-                       help="獲取過去幾小時的文章 (預設: 24)")
+                       help="領域名稱 (medical, ai, international, github, knowledge, all)")
+    parser.add_argument("--hours", type=int, default=None,
+                       help="獲取過去幾小時的文章 (預設依領域設定)")
     parser.add_argument("--dry-run", action="store_true",
                        help="測試模式，不實際發送")
     parser.add_argument("--list", action="store_true",

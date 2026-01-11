@@ -3,6 +3,8 @@ name: Daily Digest Push
 on:
   schedule:
     # UTC 時間，台灣時間 = UTC + 8
+    # 05:30 台灣 = 21:30 UTC (前一天)
+    - cron: '30 21 * * *'  # 醫學推播 (台灣 05:30)
     # 06:00 台灣 = 22:00 UTC (前一天)
     - cron: '0 22 * * *'   # AI 推播 (台灣 06:00)
     # 07:00 台灣 = 23:00 UTC (前一天)
@@ -11,19 +13,23 @@ on:
     - cron: '0 0 * * *'    # GitHub 推播 (台灣 08:00)
     # 12:00 台灣 = 04:00 UTC
     - cron: '0 4 * * *'    # 知識推播 (台灣 12:00)
+    # 20:00 台灣 = 12:00 UTC
+    - cron: '0 12 * * *'   # Readwise 精選 (台灣 20:00)
 
   workflow_dispatch:
     inputs:
       domain:
-        description: 'Domain to push (ai, international, github, knowledge, all)'
+        description: 'Domain to push'
         required: true
         default: 'all'
         type: choice
         options:
+          - medical
           - ai
           - international
           - github
           - knowledge
+          - readwise
           - all
 
 jobs:
@@ -53,12 +59,19 @@ jobs:
           else
             # 根據 UTC 時間決定領域
             HOUR=$(date -u +%H)
-            case $HOUR in
-              22) echo "domain=ai" >> $GITHUB_OUTPUT ;;           # 台灣 06:00
-              23) echo "domain=international" >> $GITHUB_OUTPUT ;; # 台灣 07:00
-              00) echo "domain=github" >> $GITHUB_OUTPUT ;;        # 台灣 08:00
-              04) echo "domain=knowledge" >> $GITHUB_OUTPUT ;;     # 台灣 12:00
-              *)  echo "domain=all" >> $GITHUB_OUTPUT ;;
+            MIN=$(date -u +%M)
+            case "$HOUR:$MIN" in
+              21:3*) echo "domain=medical" >> $GITHUB_OUTPUT ;;      # 台灣 05:30
+              *)
+                case $HOUR in
+                  22) echo "domain=ai" >> $GITHUB_OUTPUT ;;           # 台灣 06:00
+                  23) echo "domain=international" >> $GITHUB_OUTPUT ;; # 台灣 07:00
+                  00) echo "domain=github" >> $GITHUB_OUTPUT ;;        # 台灣 08:00
+                  04) echo "domain=knowledge" >> $GITHUB_OUTPUT ;;     # 台灣 12:00
+                  12) echo "domain=readwise" >> $GITHUB_OUTPUT ;;      # 台灣 20:00
+                  *)  echo "domain=all" >> $GITHUB_OUTPUT ;;
+                esac
+              ;;
             esac
           fi
 
@@ -70,7 +83,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cd scripts
-          python domain_digest.py ${{ steps.determine-domain.outputs.domain }}
+          DOMAIN="${{ steps.determine-domain.outputs.domain }}"
+          if [ "$DOMAIN" == "readwise" ]; then
+            python daily_digest.py
+          else
+            python domain_digest.py $DOMAIN
+          fi
 
       - name: Summary
         run: |
