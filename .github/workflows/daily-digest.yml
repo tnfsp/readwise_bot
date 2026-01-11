@@ -11,6 +11,8 @@ on:
     - cron: '0 23 * * *'   # 國際推播 (台灣 07:00)
     # 08:00 台灣 = 00:00 UTC
     - cron: '0 0 * * *'    # GitHub 推播 (台灣 08:00)
+    # 09:00 台灣 = 01:00 UTC
+    - cron: '0 1 * * *'    # Claude Code 更新 (台灣 09:00)
     # 12:00 台灣 = 04:00 UTC
     - cron: '0 4 * * *'    # 知識推播 (台灣 12:00)
     # 20:00 台灣 = 12:00 UTC
@@ -28,6 +30,7 @@ on:
           - ai
           - international
           - github
+          - claude-code
           - knowledge
           - readwise
           - all
@@ -67,6 +70,7 @@ jobs:
                   22) echo "domain=ai" >> $GITHUB_OUTPUT ;;           # 台灣 06:00
                   23) echo "domain=international" >> $GITHUB_OUTPUT ;; # 台灣 07:00
                   00) echo "domain=github" >> $GITHUB_OUTPUT ;;        # 台灣 08:00
+                  01) echo "domain=claude-code" >> $GITHUB_OUTPUT ;;   # 台灣 09:00
                   04) echo "domain=knowledge" >> $GITHUB_OUTPUT ;;     # 台灣 12:00
                   12) echo "domain=readwise" >> $GITHUB_OUTPUT ;;      # 台灣 20:00
                   *)  echo "domain=all" >> $GITHUB_OUTPUT ;;

@@ -106,6 +106,16 @@ DOMAIN_CONFIG = {
         ],
         "max_items": 8,
         "use_ai_filter": True
+    },
+    "claude-code": {
+        "name": "Claude Code 更新",
+        "emoji": "⚡",
+        "feeds": [
+            {"name": "Claude Code Releases", "url": "https://github.com/anthropics/claude-code/releases.atom"},
+        ],
+        "max_items": 5,
+        "use_ai_filter": True,  # 產生版本摘要
+        "default_hours": 168  # 一週內的更新
     }
 }
 
@@ -202,7 +212,9 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
         "medical": "ECMO、VAD、心臟外科、重症醫學相關",
         "ai": "AI、LLM、Claude、機器學習、深度學習相關",
         "international": "國際情勢、地緣政治、全球事務相關",
-        "knowledge": "知識管理、生產力、學習方法、筆記工具相關"
+        "github": "GitHub 開源專案、程式開發、技術工具相關",
+        "knowledge": "知識管理、生產力、學習方法、筆記工具相關",
+        "claude-code": "Claude Code 版本更新、新功能、bug 修復"
     }
 
     prompt = f"""你是資訊篩選助手。從以下 {domain_context.get(domain, '')} 文章中，選出最重要的 {max_items} 篇。
