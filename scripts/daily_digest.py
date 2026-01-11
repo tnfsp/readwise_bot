@@ -106,11 +106,23 @@ def run_daily_digest(use_ai: bool = True, dry_run: bool = False):
 
             # 更新文章 Tag
             print("\n  更新文章標籤...")
+            # 領域對應 Tag
+            domain_tags = {
+                "AI": "@AI",
+                "國際": "@國際",
+                "知識": "@知識",
+                "醫學": "@醫學",
+                "生產力": "@生產力",
+                "其他": "@其他"
+            }
             for article in push_articles:
                 doc_id = article.get("id")
                 if doc_id:
-                    add_tag_to_document(doc_id, "#必讀")
                     add_tag_to_document(doc_id, "#推播")
+                    # 加入領域 Tag
+                    domain = article.get("domain", "其他")
+                    domain_tag = domain_tags.get(domain, f"@{domain}")
+                    add_tag_to_document(doc_id, domain_tag)
             print("  ✓ 標籤更新完成")
         else:
             print("  ✗ 推播發送失敗")
