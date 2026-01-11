@@ -391,8 +391,73 @@ python scripts/domain_digest.py all
 - [x] 新增 Readwise 排程
 - [x] AI 摘要功能
 - [x] Reddit 訊息源
-- [ ] 推送到 GitHub 並設定 Secrets
+- [x] 推送到 GitHub 並設定 Secrets
 - [ ] 建立 HEPTABASE-TEMPLATES.md
+
+---
+
+## Session: 2026-01-12 深夜 - 個人化 AI 篩選 + 訊息源補強
+
+### 變更摘要
+- 補強各領域訊息源（OpenAI、Google AI、BBC、Reuters、Hacker News 等）
+- 新增 Claude Code 獨立推播（每日 09:00）
+- 實作個人化 AI 篩選（USER_PROFILE）
+- Readwise 推播自動標記領域 Tag（@AI、@國際、@知識）
+- 探索用戶 Readwise Reader + Heptabase 資料建立偏好畫像
+
+### 決策記錄
+
+**訊息源補強**：
+| 領域 | 新增來源 |
+|------|----------|
+| AI | OpenAI Blog, Google AI, Hugging Face |
+| 國際 | Reuters World, BBC World, AP News |
+| 知識 | Hacker News Best, Farnam Street, Wait But Why |
+
+**Claude Code 獨立推播**：
+- 從 GitHub 領域分離，確保版本更新不被篩掉
+- 每日 09:00 推播，使用 AI 產生版本摘要
+
+**個人化篩選（核心功能）**：
+- 分析用戶 Heptabase 筆記庫 → 建立偏好畫像
+- USER_PROFILE 包含：身份（心臟外科醫師）、專業領域、興趣偏好、篩選原則
+- AI 摘要現在會說明「為什麼這篇對你有價值」而非通用描述
+- 例：「適合製作醫學筆記、手術流程圖」而非「這是個 Markdown 編輯器」
+
+**Readwise Tag 策略**：
+- 只標記推播文章（輕量化）
+- 自動加入：#推播 + @領域（AI/國際/知識）
+
+### 推播排程（最終版）
+| 時間 | 領域 | 來源數 |
+|------|------|--------|
+| 05:30 | 🏥 醫學 | 1 (PubMed) |
+| 06:00 | 🤖 AI | 13 (Blog + Reddit) |
+| 07:00 | 🌍 國際 | 8 (媒體 + Reddit) |
+| 08:00 | 💻 GitHub/開發 | 6 (Trending + Reddit) |
+| 09:00 | ⚡ Claude Code | 1 (Releases) |
+| 12:00 | 📚 知識 | 6 (中英文) |
+| 20:00 | 📖 Readwise | 動態 |
+
+### 產出/修改文件
+- `scripts/domain_digest.py` - USER_PROFILE、訊息源補強、Claude Code 領域
+- `scripts/daily_digest.py` - 領域 Tag 自動標記
+- `.github/workflows/daily-digest.yml` - Claude Code 排程
+
+### 已完成
+- [x] 補強訊息源
+- [x] Claude Code 獨立推播
+- [x] 個人化 AI 篩選
+- [x] Readwise 領域 Tag
+- [x] 全領域測試推播
+
+### 未來進化方向（TODO）
+- [ ] **動態偏好學習**：根據點擊/閱讀行為自動調整 USER_PROFILE
+- [ ] **從 Readwise 標籤學習**：分析 `#必讀` 文章特徵，優化篩選
+- [ ] **Heptabase 整合**：讀取最新卡片主題，動態更新興趣領域
+- [ ] **Agentic Search**：Telegram Bot 支援提問「今天有什麼 Claude 更新？」
+- [ ] **向量推薦**：訓練個人化 Embedding 模型（長期）
+- [ ] 建立 HEPTABASE-TEMPLATES.md（輸出框架）
 
 ---
 
