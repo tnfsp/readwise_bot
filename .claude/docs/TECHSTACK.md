@@ -34,10 +34,19 @@
 ### Telegram Bot
 - **用途**：每日資訊摘要推送、雙向互動
 - **技術選項**：
-  - Python + python-telegram-bot
+  - Python + python-telegram-bot（推薦）
   - Node.js + telegraf
   - n8n workflow（低程式碼）
-- **待決定**：自架或使用現成服務
+- **決定**：使用 Python，配合 Reader API 和 Claude API
+
+### Readwise Reader API
+- **文件**：https://readwise.io/reader_api
+- **端點**：
+  - `GET /api/v3/list/` - 列出文章（支援過濾）
+  - `PATCH /api/v3/update/{id}/` - 更新文章（Tag）
+  - `GET /api/v3/tags/` - 列出 Tag
+- **速率限制**：每分鐘 20 次請求
+- **Python 套件**：`readwise-api`（已安裝）
 
 ### 自動化 Pipeline（可選）
 

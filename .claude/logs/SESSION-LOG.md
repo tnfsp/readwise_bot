@@ -140,4 +140,58 @@
 
 ---
 
+## Session: 2026-01-11 - API 探索與 Tag 系統重設計
+
+### 變更摘要
+- 探索 Readwise Reader API 功能
+- 重新設計 Tag 系統（加入前綴區分）
+- 建立 AUTOMATION.md 自動化架構文件
+- 建立並測試 Reader API 測試腳本
+- 設定 .env 環境變數
+
+### 決策記錄
+
+**Readwise Reader API 能力確認**：
+- 支援端點：list（列出文章）、update（更新 Tag）、tags（取得 Tag）、save（存入文章）
+- 速率限制：每分鐘 20 次（足夠每日處理）
+- 現有資料：19,113 總文章、15,476 未處理（Feed 中）、48 個 Tag
+
+**Tag 系統重新設計**：
+- 原有系統：A-（Area）、P-（Project）、R-（Resource）前綴
+- 新設計決策：重新設計，同時支援狀態追蹤與領域分類
+- 前綴系統：
+  - `#` = 狀態（#必讀、#已讀、#已輸出、#略過、#稍後、#推播）
+  - `@` = 領域（@醫學、@AI、@國際、@知識、@生產力、@生活）
+  - `★` = 特殊標記（★星標）
+  - `?` = 待處理（?衝突）
+
+**自動化架構選擇**：
+- 決定使用 Python Script 方案（最靈活，適合 AI 整合）
+- 暫不使用 readwise-api 套件的高層封裝（功能有限）
+- 直接使用 requests 呼叫 REST API
+
+### API 測試結果
+- 過去 24 小時新文章：51 篇
+- Feed 中未處理：15,476 篇
+- 現有 Tag：48 個
+- API 連接狀態：正常
+
+### 產出文件
+- `.claude/docs/AUTOMATION.md` - 自動化系統架構
+- `.claude/docs/READER-SETUP.md` - 更新 Tag 系統設計
+- `.env` - 環境變數設定
+- `scripts/test_reader_api.py` - API 測試腳本
+
+### 待辦事項
+- [x] 探索 Reader API
+- [x] 重新設計 Tag 系統
+- [x] 建立測試腳本
+- [x] 測試 API 連接
+- [ ] 建立 Telegram Bot（@BotFather）
+- [ ] 設計 AI 篩選 prompt
+- [ ] 完成每日推播腳本
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->
