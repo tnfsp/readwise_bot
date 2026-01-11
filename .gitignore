@@ -29,3 +29,5 @@ out/
 # Temporary
 tmp/
 temp/
+.env
+nul

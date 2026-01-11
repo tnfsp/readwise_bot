@@ -194,4 +194,87 @@
 
 ---
 
+## Session: 2026-01-11 深夜 - 完成自動化推播系統
+
+### 變更摘要
+- 討論並調整 WORKFLOW.md（降低每日門檻、週輸出）
+- 完成 Telegram Bot 設定
+- 完成所有自動化腳本
+- 首次成功推播測試
+- 更新 allow 權限設定
+
+### 決策記錄
+
+**工作流調整**：
+- 原設計：每日 50 分鐘、每日輸出
+- 新設計：分層設計
+  - 最小可行：15 分鐘/每日（底線）
+  - 標準版：30 分鐘（有空時）
+  - 完整版：50 分鐘（週末）
+- 輸出改為：每週 3 張卡片（降低壓力）
+
+**Telegram Bot 建立**：
+- Bot Token: 已設定
+- Chat ID: 8271188180
+- 測試推播：成功
+
+**自動化腳本完成**：
+- `scripts/config.py` - 配置管理
+- `scripts/reader_client.py` - Readwise API 封裝
+- `scripts/telegram_bot.py` - Telegram 推播
+- `scripts/ai_filter.py` - Claude AI 篩選
+- `scripts/daily_digest.py` - 主程式
+
+**AI 篩選效果**：
+- 輸入：33 篇新文章
+- 輸出：7-8 篇精選
+- 自動分類領域、產生中文摘要
+- 使用 Claude Sonnet 模型
+
+**Allow 設定更新**：
+- 全部操作已允許（Bash、Read、Write、Edit、Glob、Grep）
+
+### 首次推播結果
+- 時間：2026-01-11 23:41
+- 精選文章：8 篇
+- 領域分布：AI (6)、知識 (2)
+- 推播狀態：成功
+
+### 產出文件
+- `scripts/config.py`
+- `scripts/reader_client.py`
+- `scripts/telegram_bot.py`
+- `scripts/ai_filter.py`
+- `scripts/daily_digest.py`
+- `requirements.txt`
+- `.env`（更新）
+- `.claude/settings.local.json`（更新）
+- `.claude/docs/WORKFLOW.md`（更新）
+
+### 使用方式
+```bash
+# 測試所有連接
+python scripts/daily_digest.py --test
+
+# 測試模式（不發送）
+python scripts/daily_digest.py --dry-run
+
+# 正式推播
+python scripts/daily_digest.py
+
+# 不使用 AI（簡單規則）
+python scripts/daily_digest.py --no-ai
+```
+
+### 待辦事項
+- [x] 建立 Telegram Bot
+- [x] 完成所有自動化腳本
+- [x] 測試完整推播流程
+- [x] 更新 allow 設定
+- [ ] 設定每日定時執行（Windows Task Scheduler 或其他）
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+- [ ] 觀察 1-2 週，調整 AI 篩選參數
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->
