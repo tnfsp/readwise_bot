@@ -609,9 +609,74 @@ python scripts/quick_capture.py --test
 ```
 
 ### 待辦事項
-- [ ] 部署方案：選擇 Polling 持續運行 或 Webhook
+- [x] 部署方案：選擇 Polling 持續運行 或 Webhook
 - [ ] 建立 HEPTABASE-TEMPLATES.md
 - [ ] 觀察使用情況，調整 AI 標題生成品質
+
+---
+
+## Session: 2026-01-12 凌晨續 - Zeabur 部署完成
+
+### 變更摘要
+- 完成 Zeabur 部署配置
+- Quick Capture Bot 正式上線
+
+### 部署過程
+
+1. **建立 Webhook 版本**
+   - 新增 `app.py` 作為入口
+   - 使用 Flask + Gunicorn
+
+2. **Zeabur 配置**
+   - `Procfile` - 啟動命令
+   - `zeabur.json` - Python 3.11 配置
+
+3. **除錯**
+   - 修復模組導入路徑問題
+   - 修復 HTTPS webhook URL 問題
+
+### 部署結果
+
+| 項目 | 狀態 |
+|------|------|
+| 服務 URL | https://readwise-bot.zeabur.app |
+| Webhook | https://readwise-bot.zeabur.app/webhook |
+| 狀態 | ✅ 運行中 |
+
+### 環境變數（Zeabur）
+- `READWISE_TOKEN`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `ANTHROPIC_API_KEY`
+
+### 最終架構
+
+```
+GitHub Actions（定時推播）
+├── 06:00 AI 領域
+├── 07:00 國際領域
+├── 08:00 GitHub
+├── 09:00 Claude Code
+├── 12:00 知識領域
+└── 20:00 Readwise 精選
+
+Zeabur（Quick Capture）
+└── 24/7 監聽 Telegram
+    ├── Forward 頻道文章 → Reader
+    ├── 貼連結 → Reader
+    └── 純文字 → AI 標題 → Reader
+```
+
+### 產出檔案
+- `app.py` - Webhook 入口
+- `Procfile` - 部署配置
+- `zeabur.json` - Zeabur 配置
+- `scripts/__init__.py` - 模組初始化
+
+### 待辦事項
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+- [ ] 觀察 Quick Capture 使用情況
+- [ ] 根據使用回饋調整 AI 標題品質
 
 ---
 
