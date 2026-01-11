@@ -37,8 +37,13 @@ DOMAIN_CONFIG = {
         "name": "AI",
         "emoji": "🤖",
         "feeds": [
+            # 核心 Blog
             {"name": "Simon Willison", "url": "https://simonwillison.net/atom/everything/"},
             {"name": "Anthropic", "url": "https://www.anthropic.com/rss.xml"},
+            {"name": "OpenAI", "url": "https://openai.com/blog/rss.xml"},
+            {"name": "Google AI", "url": "https://blog.google/technology/ai/rss/"},
+            {"name": "Hugging Face", "url": "https://huggingface.co/blog/feed.xml"},
+            # Newsletter
             {"name": "Latent Space", "url": "https://www.latent.space/feed"},
             {"name": "Import AI", "url": "https://importai.substack.com/feed"},
             {"name": "Ben's Bites", "url": "https://bensbites.beehiiv.com/feed"},
@@ -56,14 +61,19 @@ DOMAIN_CONFIG = {
         "name": "國際情勢",
         "emoji": "🌍",
         "feeds": [
+            # 深度分析
             {"name": "Foreign Affairs", "url": "https://www.foreignaffairs.com/rss.xml"},
             {"name": "Foreign Policy", "url": "https://foreignpolicy.com/feed/"},
             {"name": "Project Syndicate", "url": "https://www.project-syndicate.org/rss"},
+            # 即時新聞
+            {"name": "Reuters World", "url": "https://www.rss.reuters.com/news/worldnews"},
+            {"name": "BBC World", "url": "https://feeds.bbci.co.uk/news/world/rss.xml"},
+            {"name": "AP News", "url": "https://apnews.com/world-news.rss"},
             # Reddit
             {"name": "r/geopolitics", "url": "https://www.reddit.com/r/geopolitics/top/.rss?t=day"},
             {"name": "r/worldnews", "url": "https://www.reddit.com/r/worldnews/top/.rss?t=day"},
         ],
-        "max_items": 8,
+        "max_items": 10,
         "use_ai_filter": True
     },
     "github": {
@@ -85,11 +95,16 @@ DOMAIN_CONFIG = {
         "name": "知識/生產力",
         "emoji": "📚",
         "feeds": [
+            # 中文
             {"name": "電腦玩物", "url": "https://www.playpcesor.com/feeds/posts/default?alt=rss"},
             {"name": "少数派", "url": "https://sspai.com/feed"},
             {"name": "閱讀前哨站", "url": "https://readingoutpost.com/feed/"},
+            # 英文
+            {"name": "Hacker News Best", "url": "https://hnrss.org/best"},
+            {"name": "Farnam Street", "url": "https://fs.blog/feed/"},
+            {"name": "Wait But Why", "url": "https://waitbutwhy.com/feed"},
         ],
-        "max_items": 6,
+        "max_items": 8,
         "use_ai_filter": True
     }
 }
