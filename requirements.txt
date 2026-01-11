@@ -10,5 +10,9 @@ feedparser>=6.0.0
 # 環境變數管理
 python-dotenv>=1.0.0
 
+# Web 框架（Webhook 模式）
+flask>=3.0.0
+gunicorn>=21.0.0
+
 # Readwise API (可選，目前使用直接 requests)
 # readwise-api>=0.3.0
