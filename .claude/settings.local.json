@@ -12,7 +12,8 @@
       "Bash(pip install:*)",
       "Bash(python domain_digest.py:*)",
       "Bash(git add:*)",
-      "Bash(python scripts/domain_digest.py:*)"
+      "Bash(python scripts/domain_digest.py:*)",
+      "Bash(python scripts/test_reader_api.py:*)"
     ]
   }
 }

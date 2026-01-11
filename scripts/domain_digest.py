@@ -190,9 +190,28 @@ def fetch_domain_articles(domain: str, hours: int = 24) -> List[Dict]:
     return all_articles
 
 
+# 用戶偏好 Profile（根據閱讀歷史和筆記庫分析）
+USER_PROFILE = """
+## 用戶背景
+- 身份：心臟外科醫師
+- 專業領域：ECMO、VAD、瓣膜手術（Morrow technique、AVR）、術後重症照護
+
+## 興趣偏好
+- 醫學：心臟外科新技術、ECMO/VAD 管理、術後併發症處理、藥物使用（Vancomycin、Meropenem、Milrinone）
+- AI/技術：Claude Code、LLM 應用、自動化工作流（n8n）、AI Agent
+- 知識管理：Zettelkasten、Heptabase、第二大腦、筆記方法論
+- 思考：喜歡深度分析和實用案例，偏好有洞見的內容而非純新聞
+
+## 篩選原則
+- 優先：有實際應用價值、技術深度、獨特觀點的文章
+- 次要：產業趨勢、工具更新
+- 避免：純粹的新聞速報、標題黨、重複內容
+"""
+
+
 def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> List[Dict]:
     """
-    使用 AI 篩選文章並產生摘要
+    使用 AI 篩選文章並產生摘要（根據用戶偏好）
     """
     if not articles:
         return []
@@ -217,14 +236,19 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
         "claude-code": "Claude Code 版本更新、新功能、bug 修復"
     }
 
-    prompt = f"""你是資訊篩選助手。從以下 {domain_context.get(domain, '')} 文章中，選出最重要的 {max_items} 篇。
+    prompt = f"""你是個人化資訊篩選助手。根據用戶的背景和偏好，從文章中選出最符合他興趣的內容。
 
-文章列表：
+{USER_PROFILE}
+
+## 本次任務
+領域：{domain_context.get(domain, '')}
+從以下文章中選出最符合用戶興趣的 {max_items} 篇：
+
 {chr(10).join(articles_text)}
 
 請用 JSON 格式回覆，包含：
 1. 選中的文章編號
-2. 每篇文章的一句話重點（說明為什麼重要/有趣，讓讀者決定是否要點進去看）
+2. 每篇文章的一句話重點（說明為什麼這篇對「這位用戶」特別有價值）
 
 格式範例：
 {{"selected": [1, 3, 5], "highlights": {{"1": "首個...", "3": "突破...", "5": "最新..."}}}}
