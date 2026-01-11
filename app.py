@@ -144,9 +144,16 @@ def webhook():
 
 @app.route("/set_webhook", methods=["GET"])
 def set_webhook():
-    # 強制使用 HTTPS
-    host = request.host
-    webhook_url = f"https://{host}/webhook"
+    # 從環境變數或參數取得 host
+    host = request.args.get("host") or os.getenv("ZEABUR_URL") or request.host
+    # 確保使用 HTTPS
+    if not host.startswith("http"):
+        webhook_url = f"https://{host}/webhook"
+    elif host.startswith("http://"):
+        webhook_url = host.replace("http://", "https://") + "/webhook"
+    else:
+        webhook_url = f"{host}/webhook"
+
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
     r = requests.post(url, json={"url": webhook_url})
     return jsonify({"webhook_url": webhook_url, "result": r.json()})
