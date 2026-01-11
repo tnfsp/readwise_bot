@@ -153,6 +153,113 @@ def get_all_tags() -> List[Dict]:
     return []
 
 
+# ============================================================
+# Quick Capture 功能 - Save API
+# ============================================================
+
+def save_url(
+    url: str,
+    tags: List[str] = None,
+    notes: str = None,
+    summary: str = None
+) -> Optional[Dict]:
+    """
+    存入 URL 到 Reader（文章會自動抓取）
+
+    Args:
+        url: 文章 URL
+        tags: 標籤列表，例如 ["#TG收集", "@AI"]
+        notes: 用戶評論/筆記
+        summary: 文章摘要
+
+    Returns:
+        成功時返回文章資訊，失敗返回 None
+    """
+    payload = {"url": url}
+
+    if tags:
+        payload["tags"] = tags
+    if notes:
+        payload["notes"] = notes
+    if summary:
+        payload["summary"] = summary
+
+    response = requests.post(
+        f"{READWISE_BASE_URL}/save/",
+        headers=get_headers(),
+        json=payload
+    )
+
+    if response.status_code in [200, 201]:
+        return response.json()
+    else:
+        print(f"Error saving URL: {response.status_code}")
+        print(response.text)
+        return None
+
+
+def save_note(
+    content: str,
+    title: str,
+    source_name: str = None,
+    tags: List[str] = None,
+    notes: str = None
+) -> Optional[Dict]:
+    """
+    存入純文字筆記到 Reader
+
+    Args:
+        content: 筆記內容
+        title: 標題（AI 生成或手動指定）
+        source_name: 來源名稱，例如頻道名稱或「我的筆記」
+        tags: 標籤列表
+        notes: 額外的用戶評論
+
+    Returns:
+        成功時返回文章資訊，失敗返回 None
+    """
+    # 組裝來源標記
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    if source_name:
+        author = f"[{source_name}] {now}"
+    else:
+        author = f"[我的筆記] {now}"
+
+    # 將純文字轉換為 HTML（保留換行）
+    html_lines = content.replace("\n", "<br>")
+    html_content = f"<article><p>{html_lines}</p></article>"
+
+    # 使用虛擬 URL（Reader 需要 URL 欄位）
+    fake_url = f"https://tg-capture.local/{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    payload = {
+        "url": fake_url,
+        "html": html_content,
+        "title": title,
+        "author": author,
+        "should_clean_html": True,
+        "saved_using": "TG Quick Capture"
+    }
+
+    if tags:
+        payload["tags"] = tags
+    if notes:
+        payload["notes"] = notes
+
+    response = requests.post(
+        f"{READWISE_BASE_URL}/save/",
+        headers=get_headers(),
+        json=payload
+    )
+
+    if response.status_code in [200, 201]:
+        return response.json()
+    else:
+        print(f"Error saving note: {response.status_code}")
+        print(response.text)
+        return None
+
+
 if __name__ == "__main__":
     # 測試
     print("Testing Reader Client...")

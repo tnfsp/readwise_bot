@@ -1,19 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(*)",
-      "Read(*)",
-      "Write(*)",
-      "Edit(*)",
-      "Glob(*)",
-      "Grep(*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 完成每日推播自動化系統\n\n- 建立完整推播腳本 \\(config, reader_client, telegram_bot, ai_filter, daily_digest\\)\n- 首次 Telegram 推播測試成功\n- 調整 WORKFLOW.md 為分層設計（15/30/50 分鐘）\n- 輸出目標從每日改為每週 3 張卡片\n- 更新 allow 權限設定\n\n使用方式：\n- python scripts/daily_digest.py --test \\(測試連接\\)\n- python scripts/daily_digest.py --dry-run \\(預覽\\)\n- python scripts/daily_digest.py \\(正式推播\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
       "WebSearch",
-      "Bash(pip install:*)",
-      "Bash(python domain_digest.py:*)",
-      "Bash(git add:*)",
-      "Bash(python scripts/domain_digest.py:*)",
-      "Bash(python scripts/test_reader_api.py:*)"
+      "Skill(pm)"
     ]
   }
 }

@@ -461,4 +461,158 @@ python scripts/domain_digest.py all
 
 ---
 
+## Session: 2026-01-12 下午 - Telegram Bot 收集功能設計
+
+### 變更摘要
+- 討論並設計 Telegram Bot 收集功能（Quick Capture）
+- 更新 PRD v0.2，新增功能 8
+
+### 討論過程
+
+**起點**：用戶提出想法 — Forward TG 頻道文章到 Readwise/Reader
+
+**決策 1：納入現有專案 vs 新專案？**
+- 結論：納入現有專案（目標一致、技術共用、避免碎片化）
+
+**決策 2：雙向化現有 Bot vs 獨立收集 Bot？**
+- 結論：先雙向化現有 Bot（用戶體驗優先、功能簡單）
+
+**決策 3：存 Readwise vs Reader？**
+- 結論：統一存 Reader
+- 理由：用戶不常用 Daily Review，且 Reader document 模型更適合筆記
+
+**決策 4：三種案例的處理方式**
+
+| 案例 | 內容 | 處理 |
+|------|------|------|
+| 1. Forward 純文字 | 別人的觀點 | AI 生成標題，來源標記頻道名稱 |
+| 2. Forward 有連結 | 文章連結 | 提取 URL，Reader 抓全文 |
+| 3. 自己打的純文字 | 自己的想法 | AI 生成標題，來源標記「我的筆記」 |
+
+**決策 5：標題處理**
+- 使用 AI 自動生成有意義的標題（而非固定格式）
+
+**決策 6：來源標記格式**
+- Forward：`[頻道名稱] 日期`
+- 自己打：`[我的筆記] 日期時間`
+
+**決策 7：是否區分隨手記 vs 值得整理？**
+- 結論：不區分，全部先進 Reader
+- 理由：減少摩擦、符合「允許略過」原則、讓未來的自己決定
+
+### 設計原則確認
+- **低摩擦**：發訊息就完成，不需要額外指令
+- **統一入口**：全部進 Reader，用現有流程處理
+- **保留來源**：Forward 內容保留頻道名稱
+
+### 產出文件
+- `.claude/docs/PRD.md` - 更新至 v0.2，新增功能 8
+
+### 待辦事項
+- [x] `/pm` 規劃 Quick Capture 功能的實作計畫
+- [ ] 確認 Reader API 支援存 HTML 內容（純文字筆記）
+- [ ] 設計 Telegram Bot 接收訊息的程式邏輯
+- [ ] 測試 Forward 訊息時取得頻道名稱
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+
+---
+
+## Session: 2026-01-12 下午續 - Quick Capture 實作規劃
+
+### 變更摘要
+- 完成 Quick Capture 功能的詳細實作計畫
+- 更新 IMPLEMENTATION-PLAN.md 新增 Phase 2.5
+
+### 規劃內容
+
+**Phase 2.5: Quick Capture 功能**
+
+分為 6 個子階段：
+
+| 階段 | 內容 | 產出 |
+|------|------|------|
+| 2.5.1 | 技術驗證 | Reader save API / TG 接收測試 |
+| 2.5.2 | Reader Client 擴展 | save_url(), save_note() |
+| 2.5.3 | Telegram Bot 擴展 | 訊息接收 + 解析邏輯 |
+| 2.5.4 | AI 輔助功能 | 標題生成 + 領域判斷 |
+| 2.5.5 | 整合與測試 | quick_capture.py |
+| 2.5.6 | 部署 | Polling / Webhook |
+
+### 技術決策
+
+**Telegram Bot 接收方式**：
+- 建議先用 Polling 模式開發測試
+- 之後可轉 Webhook 部署到雲端
+
+**程式架構**：
+- 擴展現有 `reader_client.py` 和 `telegram_bot.py`
+- 新增 `quick_capture.py` 作為主程式
+- 新增 `message_parser.py` 處理訊息解析
+
+### 產出文件
+- `.claude/docs/IMPLEMENTATION-PLAN.md` - 新增 Phase 2.5
+
+### 下一步
+1. 技術驗證：測試 Reader API save 功能
+2. 技術驗證：測試 Telegram Bot 接收 Forward 訊息
+3. 開始實作 2.5.2 Reader Client 擴展
+
+---
+
+## Session: 2026-01-12 凌晨 - Quick Capture 功能完成
+
+### 變更摘要
+- 完成技術驗證（Reader Save API + Telegram 接收）
+- 完成 Quick Capture 功能實作
+- 整合測試成功
+
+### 技術驗證結果
+
+**Reader Save API**：
+- `save_url()` ✅ 可存入連結
+- `save_note()` ✅ 可存入 HTML 內容
+- Tags 參數 ✅ 正常運作
+- Notes 參數 ✅ 可添加用戶評論
+
+**Telegram Bot 接收**：
+- Polling 模式 ✅ 正常運作
+- Forward 偵測 ✅ `is_forward` 判斷正確
+- 頻道名稱 ✅ `forward_from_chat.title` 可獲取
+- URL 提取 ✅ 正規表達式提取成功
+
+### 實作內容
+
+| 檔案 | 變更 |
+|------|------|
+| `scripts/reader_client.py` | 新增 `save_url()`, `save_note()` |
+| `scripts/message_parser.py` | 新建，訊息解析模組 |
+| `scripts/ai_filter.py` | 新增 `generate_title()`, `detect_domain()`, `process_capture_content()` |
+| `scripts/quick_capture.py` | 新建，主程式 |
+| `scripts/test_reader_save.py` | 新建，API 測試腳本 |
+| `scripts/test_telegram_receive_v3.py` | 新建，接收測試腳本 |
+
+### 測試結果
+
+| 案例 | 類型 | AI 標題 | 領域 | 狀態 |
+|------|------|---------|------|------|
+| Forward 純文字 | forward_text | AI编程助手冲击下... | AI | ✅ |
+| Forward 純文字 | forward_text | TailwindCSS付费产品困境... | AI | ✅ |
+| 自己打純文字 | text_only | TG 筆記 | 其他 | ✅ |
+
+### 使用方式
+```bash
+# 持續運行 Bot
+python scripts/quick_capture.py
+
+# 測試模式
+python scripts/quick_capture.py --test
+```
+
+### 待辦事項
+- [ ] 部署方案：選擇 Polling 持續運行 或 Webhook
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+- [ ] 觀察使用情況，調整 AI 標題生成品質
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->

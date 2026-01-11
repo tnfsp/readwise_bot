@@ -177,6 +177,149 @@ def simple_filter(articles: List[Dict], max_articles: int = 10) -> List[Dict]:
     return filtered[:max_articles]
 
 
+# ============================================================
+# Quick Capture 功能 - AI 輔助
+# ============================================================
+
+def generate_title(content: str, max_length: int = 30) -> str:
+    """
+    使用 AI 生成標題
+
+    Args:
+        content: 內容文字
+        max_length: 標題最大長度
+
+    Returns:
+        生成的標題
+    """
+    if not content or len(content.strip()) < 10:
+        return "TG 筆記"
+
+    client = get_client()
+
+    prompt = f"""根據以下內容生成一個簡潔的中文標題（{max_length}字以內）：
+
+規則：
+- 如果是觀點/分析，標題應反映核心論點
+- 如果是隨手記/感想，標題應反映主題
+- 不要使用引號
+- 直接返回標題文字，不要其他說明
+
+內容：
+{content[:500]}"""
+
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=100,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        title = message.content[0].text.strip()
+        # 清理可能的引號
+        title = title.strip('"\'')
+        # 限制長度
+        if len(title) > max_length:
+            title = title[:max_length-1] + "..."
+
+        return title
+
+    except Exception as e:
+        print(f"AI title generation error: {e}")
+        # 降級：使用內容開頭
+        return content[:20].replace("\n", " ") + "..."
+
+
+def detect_domain(content: str) -> str:
+    """
+    使用 AI 判斷內容領域
+
+    Args:
+        content: 內容文字
+
+    Returns:
+        領域名稱
+    """
+    if not content:
+        return "其他"
+
+    # 先用簡單規則判斷
+    text = content.lower()
+    for domain, keywords in DOMAINS.items():
+        for keyword in keywords:
+            if keyword.lower() in text:
+                return domain
+
+    # 如果簡單規則無法判斷，使用 AI
+    client = get_client()
+
+    prompt = f"""判斷以下內容屬於哪個領域，只回覆領域名稱：
+- 醫學
+- AI
+- 國際
+- 知識
+- 生產力
+- 生活
+- 其他
+
+內容：
+{content[:300]}
+
+領域："""
+
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=20,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        domain = message.content[0].text.strip()
+
+        # 驗證返回值
+        valid_domains = ["醫學", "AI", "國際", "知識", "生產力", "生活", "其他"]
+        if domain in valid_domains:
+            return domain
+        else:
+            return "其他"
+
+    except Exception as e:
+        print(f"AI domain detection error: {e}")
+        return "其他"
+
+
+def process_capture_content(content: str, is_forward: bool = False) -> Dict:
+    """
+    處理 Quick Capture 的內容（生成標題 + 判斷領域）
+
+    Args:
+        content: 內容文字
+        is_forward: 是否為轉發內容
+
+    Returns:
+        包含 title 和 domain 的字典
+    """
+    title = generate_title(content)
+    domain = detect_domain(content)
+
+    # 領域對應的 Tag
+    domain_tags = {
+        "醫學": "@醫學",
+        "AI": "@AI",
+        "國際": "@國際",
+        "知識": "@知識",
+        "生產力": "@生產力",
+        "生活": "@生活",
+        "其他": "@其他"
+    }
+
+    return {
+        "title": title,
+        "domain": domain,
+        "domain_tag": domain_tags.get(domain, "@其他")
+    }
+
+
 if __name__ == "__main__":
     # 測試
     test_articles = [
@@ -190,3 +333,13 @@ if __name__ == "__main__":
     print(f"Filtered to {len(results)} articles")
     for r in results:
         print(f"  - [{r.get('domain')}] {r.get('title')[:40]}")
+
+    # 測試 Quick Capture 功能
+    print("\n" + "="*50)
+    print("Testing Quick Capture AI functions...")
+
+    test_content = "今天看了一百公尺這部電影，我覺得挺有趣的，很青春"
+    result = process_capture_content(test_content)
+    print(f"Content: {test_content}")
+    print(f"Generated title: {result['title']}")
+    print(f"Detected domain: {result['domain']}")

@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-01-12T02:17:32.211282",
+    "case_type": "Forward_Text",
+    "is_forward": true,
+    "channel_name": "Leslie和朋友们",
+    "channel_username": "justgoidea",
+    "has_url": false,
+    "urls": [],
+    "text_preview": "在 2026 年的股市投资中，不要去赌「AI 会不会成功」，因为这只是徒劳的预测。相反，应观察在 AI 叙事的驱动下，哪些人的行为正在改变？这些行为创造了什么新的需求？哪些公司能够捕捉这些需求，但尚未被市场充分定价？",
+    "forward_data": {
+      "id": -1001515089840,
+      "title": "Leslie和朋友们",
+      "username": "justgoidea",
+      "type": "channel"
+    }
+  },
+  {
+    "timestamp": "2026-01-12T02:17:45.939329",
+    "case_type": "Forward_URL",
+    "is_forward": true,
+    "channel_name": "Leslie和朋友们",
+    "channel_username": "justgoidea",
+    "has_url": true,
+    "urls": [
+      "https://anildash.com/2026/01/09/how-markdown-took-over-the-world/"
+    ],
+    "text_preview": "这是一篇既有技术深度又充满人情味的互联网史文章，从个人博客时代讲起，讲清了 Markdown 如何在不经意间成为现代互联网的「通用文字接口」：从博客、RSS，到 GitHub、AI Prompts，再到 Apple Notes、Google Docs。作者一边回顾亲历者视角下的诞生故事，一边提炼出它成功的技术与社会原因，是了解开放标准与互联网文化的绝佳读物。\n\nhttps://anildash.com/2026/01/09/how-markdown-took-over-the-world/",
+    "forward_data": {
+      "id": -1001515089840,
+      "title": "Leslie和朋友们",
+      "username": "justgoidea",
+      "type": "channel"
+    }
+  },
+  {
+    "timestamp": "2026-01-12T02:17:59.726797",
+    "case_type": "Text_Only",
+    "is_forward": false,
+    "channel_name": null,
+    "channel_username": null,
+    "has_url": false,
+    "urls": [],
+    "text_preview": "測試測試",
+    "forward_data": null
+  }
+]
