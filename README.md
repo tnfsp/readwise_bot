@@ -1,99 +1,64 @@
-# Claude Code 專案模板
+# 個人訊息流強化系統
 
-這是一個使用 Claude Code 進行開發的專案模板框架。透過 Subagent 架構，讓 AI 協助你從概念設計到專案完成。
+> 每天 30 分鐘，精準掌握 AI、國際、GitHub、知識領域的重要資訊。
+
+解決資訊焦慮（FOMO），用 AI 篩選 + 分領域推播，讓你專注在真正重要的內容。
+
+## 功能
+
+- 🤖 **AI 智慧篩選**：Claude 自動評估文章重要性
+- 📬 **Telegram 推播**：每日定時推送精選內容
+- 🏷️ **分領域推播**：不同時段推送不同主題
+- 📊 **多來源整合**：RSS、Readwise Reader、GitHub Trending
+
+## 推播時間表
+
+| 時間 | 領域 | 來源 |
+|------|------|------|
+| 06:00 | 🤖 AI | Simon Willison, Anthropic, Latent Space, Import AI |
+| 07:00 | 🌍 國際 | Foreign Affairs, Foreign Policy, Project Syndicate |
+| 08:00 | 💻 GitHub | Trending, claude-code releases |
+| 12:00 | 📚 知識 | 電腦玩物, 少数派, 閱讀前哨站 |
 
 ## 快速開始
 
-### 1. 複製此模板
-將此資料夾複製到你的新專案目錄。
-
-### 2. 啟動 Claude Code
 ```bash
-cd your-project
-claude
+# 安裝
+pip install -r requirements.txt
+
+# 設定環境變數（複製 .env.example 並填入 API keys）
+cp .env.example .env
+
+# 測試
+python scripts/domain_digest.py github --dry-run
+
+# 執行
+python scripts/domain_digest.py ai
 ```
 
-### 3. 開始設計專案
-```
-/concept
-```
-與 Concept 設計師討論你的專案概念、需求與技術選擇。
+## 部署（GitHub Actions）
 
-### 4. 規劃與執行
-```
-/pm
-```
-讓 Project Manager 建立實作計畫，並協調各個 subagent 完成任務。
+1. Fork 此 repo
+2. 設定 Secrets（Settings → Secrets → Actions）：
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+   - `ANTHROPIC_API_KEY`
+   - `READWISE_TOKEN`
+3. 自動按排程執行
 
-## 架構說明
+## 專案結構
 
 ```
-.claude/
-├── commands/           # Subagent 指令
-│   ├── concept.md      # 概念設計師 - 負責 PRD、技術棧設計
-│   └── pm.md           # 專案經理 - 負責規劃、調度、追蹤
-├── docs/               # 專案文件
-│   ├── PRD.md          # 產品需求文件
-│   ├── TECHSTACK.md    # 技術棧說明
-│   └── IMPLEMENTATION-PLAN.md  # 實作計畫
-└── logs/
-    └── SESSION-LOG.md  # 工作記錄（每次 session 累積）
+scripts/
+├── domain_digest.py    # 分領域推播（主程式）
+├── daily_digest.py     # Readwise 整合推播
+├── ai_filter.py        # Claude AI 篩選
+├── reader_client.py    # Readwise API
+└── telegram_bot.py     # Telegram 推播
 
-CLAUDE.md               # Claude Code 讀取的專案說明
-README.md               # 本檔案（給人類讀取）
+.github/workflows/
+└── daily-digest.yml    # GitHub Actions 排程
 ```
-
-## 工作流程
-
-```
-1. /concept  →  討論專案概念，產出 PRD + TECHSTACK
-        ↓
-2. /pm       →  制定 IMPLEMENTATION-PLAN，建立需要的 subagent
-        ↓
-3. /xxx      →  PM 調動各 subagent 執行任務
-        ↓
-4. 更新 Log  →  記錄進度，方便接力開發
-        ↓
-5. Git Push  →  保存變更
-```
-
-## Subagent 說明
-
-### /concept - 概念設計師
-- 與你討論專案的目標、功能、用戶
-- 撰寫與維護 PRD（產品需求文件）
-- 決定技術棧，撰寫 TECHSTACK
-- 設計專案需要的其他 subagent
-
-### /pm - 專案經理
-- 根據 PRD 撰寫實作計畫
-- 動態建立新的 subagent（如 /coder, /tester）
-- 調度 subagent 完成任務
-- 追蹤進度，維護 log
-
-### 動態 Subagent
-PM 可根據專案需求建立其他 subagent，例如：
-- `/coder` - 撰寫程式碼
-- `/tester` - 撰寫測試
-- `/reviewer` - Code review
-- `/devops` - 部署相關
-
-## Log 系統
-
-每次使用 Claude Code 工作後，會在 `.claude/logs/SESSION-LOG.md` 記錄：
-- **變更摘要**：完成了什麼
-- **決策記錄**：做了什麼決定、為什麼
-- **待辦事項**：下次要繼續的工作
-
-這讓你可以隨時中斷，下次繼續接力開發。
-
-## 自訂與擴展
-
-### 新增 Subagent
-在 `.claude/commands/` 建立新的 `.md` 檔案即可。
-
-### 修改流程
-編輯 `CLAUDE.md` 或各 subagent 的 `.md` 檔案來調整行為。
 
 ## License
 
