@@ -1,65 +1,192 @@
-# 個人訊息流強化系統
+# Personal Information Flow System
 
-> 每天 30 分鐘，精準掌握 AI、國際、GitHub、知識領域的重要資訊。
+> AI-powered RSS digest with Telegram push notifications & Readwise Reader integration.
 
 解決資訊焦慮（FOMO），用 AI 篩選 + 分領域推播，讓你專注在真正重要的內容。
 
-## 功能
+## Features
 
-- 🤖 **AI 智慧篩選**：Claude 自動評估文章重要性
-- 📬 **Telegram 推播**：每日定時推送精選內容
-- 🏷️ **分領域推播**：不同時段推送不同主題
-- 📊 **多來源整合**：RSS、Readwise Reader、GitHub Trending
+### 1. AI-Powered Daily Digest
+- **Smart Filtering**: Claude AI evaluates article importance based on your interests
+- **Personalized Summary**: Each article includes a one-line highlight explaining why it matters to you
+- **Multi-domain Support**: AI, International Affairs, GitHub/Dev, Knowledge, Medical
 
-## 推播時間表
+### 2. Scheduled Push Notifications
+| Time (UTC+8) | Domain | Sources |
+|--------------|--------|---------|
+| 06:00 | 🤖 AI | Simon Willison, Anthropic, OpenAI, Reddit |
+| 07:00 | 🌍 International | Foreign Affairs, Reuters, BBC |
+| 08:00 | 💻 GitHub/Dev | Trending repos, r/programming |
+| 09:00 | ⚡ Claude Code | Release notes |
+| 12:00 | 📚 Knowledge | Hacker News, Farnam Street |
 
-| 時間 | 領域 | 來源 |
-|------|------|------|
-| 06:00 | 🤖 AI | Simon Willison, Anthropic, Latent Space, Import AI |
-| 07:00 | 🌍 國際 | Foreign Affairs, Foreign Policy, Project Syndicate |
-| 08:00 | 💻 GitHub | Trending, claude-code releases |
-| 12:00 | 📚 知識 | 電腦玩物, 少数派, 閱讀前哨站 |
+### 3. Quick Capture (Telegram → Readwise Reader)
+Forward any message to your bot → AI generates title → Saved to Reader
+- Forward channel posts
+- Share URLs
+- Send text notes
 
-## 快速開始
+## Architecture
 
-```bash
-# 安裝
-pip install -r requirements.txt
+```
+┌─────────────────────────────────────────────────────────┐
+│                    GitHub Actions                        │
+│              (Scheduled Push Notifications)              │
+├─────────────────────────────────────────────────────────┤
+│  06:00 AI │ 07:00 Intl │ 08:00 GitHub │ 12:00 Knowledge │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                      RSS Feeds                           │
+│         (Blogs, Reddit, News, GitHub Trending)           │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Claude AI Filter                      │
+│     (Evaluate importance + Generate highlights)          │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Telegram Bot                          │
+│                  (Push to your chat)                     │
+└─────────────────────────────────────────────────────────┘
 
-# 設定環境變數（複製 .env.example 並填入 API keys）
-cp .env.example .env
-
-# 測試
-python scripts/domain_digest.py github --dry-run
-
-# 執行
-python scripts/domain_digest.py ai
+┌─────────────────────────────────────────────────────────┐
+│                 Zeabur (24/7 Webhook)                    │
+│                   Quick Capture Bot                      │
+├─────────────────────────────────────────────────────────┤
+│  Telegram Message → AI Title → Readwise Reader          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## 部署（GitHub Actions）
+## Quick Start
 
-1. Fork 此 repo
-2. 設定 Secrets（Settings → Secrets → Actions）：
+### Prerequisites
+- Python 3.11+
+- Telegram Bot (create via [@BotFather](https://t.me/BotFather))
+- [Anthropic API Key](https://console.anthropic.com/)
+- [Readwise Reader Token](https://readwise.io/access_token)
+
+### Installation
+
+```bash
+# Clone
+git clone https://github.com/tnfsp/readwise_bot.git
+cd readwise_bot
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+### Configuration
+
+Create `.env` file:
+
+```env
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+# Anthropic (Claude AI)
+ANTHROPIC_API_KEY=sk-ant-xxx
+
+# Readwise Reader
+READWISE_TOKEN=your_token
+```
+
+### Usage
+
+```bash
+# Test connection
+python scripts/domain_digest.py ai --dry-run
+
+# Push specific domain
+python scripts/domain_digest.py ai
+python scripts/domain_digest.py github
+python scripts/domain_digest.py international
+
+# Push all domains
+python scripts/domain_digest.py all
+
+# List available domains
+python scripts/domain_digest.py --list
+```
+
+## Deployment
+
+### Option 1: GitHub Actions (Recommended for scheduled push)
+
+1. Fork this repo
+2. Go to Settings → Secrets and variables → Actions
+3. Add secrets:
    - `TELEGRAM_BOT_TOKEN`
    - `TELEGRAM_CHAT_ID`
    - `ANTHROPIC_API_KEY`
    - `READWISE_TOKEN`
-3. 自動按排程執行
+4. Enable Actions (Actions tab → Enable)
+5. Workflows will run automatically on schedule
 
-## 專案結構
+### Option 2: Zeabur (For Quick Capture webhook)
+
+1. Connect your GitHub repo to [Zeabur](https://zeabur.com)
+2. Set environment variables
+3. Deploy
+
+## Project Structure
 
 ```
-scripts/
-├── domain_digest.py    # 分領域推播（主程式）
-├── daily_digest.py     # Readwise 整合推播
-├── ai_filter.py        # Claude AI 篩選
-├── reader_client.py    # Readwise API
-└── telegram_bot.py     # Telegram 推播
-
-.github/workflows/
-└── daily-digest.yml    # GitHub Actions 排程
+├── scripts/
+│   ├── domain_digest.py     # Domain-based push (main)
+│   ├── daily_digest.py      # Readwise integration
+│   ├── ai_filter.py         # Claude AI filtering
+│   ├── reader_client.py     # Readwise Reader API
+│   ├── telegram_bot.py      # Telegram notifications
+│   ├── quick_capture.py     # Quick capture bot
+│   └── config.py            # Configuration
+├── app.py                   # Webhook entry point
+├── .github/workflows/
+│   └── daily-digest.yml     # GitHub Actions schedule
+├── requirements.txt
+└── .env.example
 ```
+
+## Customization
+
+### Add/Modify RSS Sources
+
+Edit `DOMAIN_CONFIG` in `scripts/domain_digest.py`:
+
+```python
+DOMAIN_CONFIG = {
+    "ai": {
+        "name": "AI",
+        "emoji": "🤖",
+        "feeds": [
+            {"name": "Your Blog", "url": "https://example.com/feed.xml"},
+        ],
+        "max_items": 10,
+        "use_ai_filter": True
+    },
+}
+```
+
+### Customize AI Filtering
+
+Edit `USER_PROFILE` in `scripts/domain_digest.py` to personalize AI recommendations.
 
 ## License
 
 MIT
+
+## Acknowledgments
+
+- [Readwise Reader API](https://readwise.io/reader_api)
+- [Anthropic Claude](https://www.anthropic.com/)
+- [Telegram Bot API](https://core.telegram.org/bots/api)
