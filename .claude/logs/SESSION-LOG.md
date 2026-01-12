@@ -719,4 +719,46 @@ Zeabur（Quick Capture）
 
 ---
 
+## Session: 2026-01-12 下午續 - Repo 公開 + 進入觀察期
+
+### 變更摘要
+- 將 GitHub repo 設為 Public
+- 更新 README.md（完整英文文檔、架構圖、部署說明）
+- 新增 .env.example
+- 移除 SESSION-LOG 中的敏感資訊（Chat ID）
+
+### 決策記錄
+
+**Repo 公開**：
+- 安全檢查：確認無硬編碼的 API keys
+- 不勾選 Template（專案太個人化）
+- 移除 Chat ID 等敏感資訊
+
+**進入觀察期**：
+- Heptabase 模板暫緩，先觀察系統實際運作
+- 觀察重點：自動推播、AI 摘要品質、Quick Capture 流暢度
+
+### 產出文件
+- `README.md` - 完整公開文檔
+- `.env.example` - 環境變數範例
+
+### 專案狀態
+
+| 功能 | 狀態 |
+|------|------|
+| 資訊源架構 | ✅ |
+| 每日處理流程 | ✅ |
+| Reader 整合 | ✅ |
+| Telegram 推播 | ✅ |
+| Quick Capture | ✅ |
+| Heptabase 模板 | ⏳ 觀察後進行 |
+
+### 待辦事項
+- [ ] 觀察自動排程（06:00 AI、07:00 國際、08:00 GitHub）
+- [ ] 觀察 Quick Capture 使用情況
+- [ ] 觀察 AI 摘要品質
+- [ ] 1-2 週後設計 Heptabase 輸出模板
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->
