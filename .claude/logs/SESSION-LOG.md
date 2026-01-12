@@ -680,4 +680,43 @@ Zeabur（Quick Capture）
 
 ---
 
+## Session: 2026-01-12 下午 - GitHub Actions 推播問題修復
+
+### 變更摘要
+- 診斷並修復 GitHub Actions 自動推播失敗問題
+- 增加 Telegram API 錯誤日誌輸出
+
+### 問題診斷過程
+
+**症狀**：早上排程的自動推播沒有收到訊息，但 GitHub Actions 顯示 Status: Success
+
+**診斷步驟**：
+1. 檢查 workflow 配置 → 正常
+2. 本地測試 → 正常運作
+3. 檢查 GitHub Actions 詳細日誌 → 發現 `✗ 推播失敗`
+4. 增加錯誤日誌輸出 → 發現 `Bad Request: chat not found`
+
+**根本原因**：
+- GitHub Secrets 中的 `TELEGRAM_CHAT_ID` 設定有誤（可能有空格或格式問題）
+
+### 解決方案
+1. 修改 `scripts/domain_digest.py`，增加 Telegram API 錯誤詳情輸出
+2. 用戶重新設定 GitHub Secrets 中的 `TELEGRAM_CHAT_ID`
+3. 手動觸發測試，確認推播成功且 AI 摘要正常顯示
+
+### 產出/修改文件
+- `scripts/domain_digest.py` - 增加錯誤日誌
+
+### 驗證結果
+- AI 領域推播：✅ 成功
+- 摘要顯示（💡）：✅ 正常
+- 自動排程：待明早驗證
+
+### 待辦事項
+- [ ] 觀察明天早上自動排程是否正常（06:00 AI、07:00 國際、08:00 GitHub）
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+- [ ] 觀察 Quick Capture 使用情況
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->
