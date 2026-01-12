@@ -346,6 +346,11 @@ def send_telegram_message(text: str) -> bool:
     }
 
     response = requests.post(url, json=payload)
+    if response.status_code != 200:
+        print(f"  Telegram API 錯誤: {response.status_code}")
+        print(f"  Response: {response.text}")
+        print(f"  Chat ID: {TELEGRAM_CHAT_ID}")
+        print(f"  Token (前10字): {TELEGRAM_BOT_TOKEN[:10] if TELEGRAM_BOT_TOKEN else 'None'}...")
     return response.status_code == 200
 
 
