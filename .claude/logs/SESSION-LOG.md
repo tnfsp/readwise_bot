@@ -215,7 +215,7 @@
 
 **Telegram Bot 建立**：
 - Bot Token: 已設定
-- Chat ID: 8271188180
+- Chat ID: [已設定]
 - 測試推播：成功
 
 **自動化腳本完成**：
