@@ -79,7 +79,7 @@
 
 ---
 
-## AI / Claude Code（2026-01-11 更新）
+## AI / Claude Code（2026-01-14 更新）
 
 ### 已加入 ✅
 
@@ -90,13 +90,35 @@
 | Latent Space | Newsletter | latent.space | 06:00 AI |
 | Anthropic Blog | 官方 | anthropic.com/news | 06:00 AI |
 | Ben's Bites | Newsletter | bensbites.beehiiv.com | 06:00 AI |
+| OpenAI Blog | 官方 | openai.com/blog | 06:00 AI |
+| Google AI Blog | 官方 | blog.google/technology/ai | 06:00 AI |
+| Hugging Face Blog | 官方 | huggingface.co/blog | 06:00 AI |
+| AI Snake Oil | Blog | aisnakeoil.com | 06:00 AI（批判性觀點）|
+| r/ClaudeAI | Reddit | reddit.com/r/ClaudeAI | 06:00 AI |
+
+### Agent 開發區塊（06:00 AI 內獨立區塊）
+
+| 來源 | 類型 | 連結 | 說明 |
+|------|------|------|------|
+| LangChain Blog | Blog | blog.langchain.dev | Agent 框架動態 |
+| LlamaIndex Blog | Blog | llamaindex.ai/blog | RAG + Agent |
+| e2b.dev Blog | Blog | e2b.dev/blog | Code sandbox、Agent 執行環境 |
+
+### 已移除
+
+| 來源 | 原因 |
+|------|------|
+| r/LocalLLaMA | 本地 LLM 討論，與 Claude API 使用場景相關性低 |
+| r/MachineLearning | 精簡 Reddit 來源 |
+| r/ChatGPT | 精簡 Reddit 來源 |
+| r/artificial | 精簡 Reddit 來源 |
 
 ### 待觀察
 
 | 來源 | 類型 | 連結 | 狀態 |
 |------|------|------|------|
 | The Neuron | Newsletter | theneurondaily.com | [ ] 待評估 |
-| @alexalbert__ | Twitter | Claude prompting 專家 | [ ] 待評估 |
+| @alexalbert__ | Twitter | Claude prompting 專家（需 RSS 橋接）| [ ] 待評估 |
 | Interconnects (Nathan Lambert) | Newsletter | interconnects.ai | [ ] 待評估 |
 
 ---

@@ -43,16 +43,17 @@ DOMAIN_CONFIG = {
             {"name": "OpenAI", "url": "https://openai.com/blog/rss.xml"},
             {"name": "Google AI", "url": "https://blog.google/technology/ai/rss/"},
             {"name": "Hugging Face", "url": "https://huggingface.co/blog/feed.xml"},
+            {"name": "AI Snake Oil", "url": "https://www.aisnakeoil.com/feed"},
             # Newsletter
             {"name": "Latent Space", "url": "https://www.latent.space/feed"},
             {"name": "Import AI", "url": "https://importai.substack.com/feed"},
             {"name": "Ben's Bites", "url": "https://bensbites.beehiiv.com/feed"},
-            # Reddit
-            {"name": "r/MachineLearning", "url": "https://www.reddit.com/r/MachineLearning/top/.rss?t=day"},
-            {"name": "r/LocalLLaMA", "url": "https://www.reddit.com/r/LocalLLaMA/top/.rss?t=day"},
+            # Agent 開發
+            {"name": "LangChain Blog", "url": "https://blog.langchain.dev/rss/"},
+            {"name": "LlamaIndex Blog", "url": "https://www.llamaindex.ai/blog/rss.xml"},
+            {"name": "e2b Blog", "url": "https://e2b.dev/blog/rss.xml"},
+            # Reddit（精簡）
             {"name": "r/ClaudeAI", "url": "https://www.reddit.com/r/ClaudeAI/top/.rss?t=day"},
-            {"name": "r/ChatGPT", "url": "https://www.reddit.com/r/ChatGPT/top/.rss?t=day"},
-            {"name": "r/artificial", "url": "https://www.reddit.com/r/artificial/top/.rss?t=day"},
         ],
         "max_items": 10,
         "use_ai_filter": True
@@ -95,14 +96,18 @@ DOMAIN_CONFIG = {
         "name": "知識/生產力",
         "emoji": "📚",
         "feeds": [
+            # 深度思考型（優先）
+            {"name": "Paul Graham", "url": "http://www.aaronsw.com/2002/feeds/pgessays.rss"},
+            {"name": "Derek Sivers", "url": "https://sive.rs/en.atom"},
+            {"name": "Ness Labs", "url": "https://nesslabs.com/feed"},
+            {"name": "Farnam Street", "url": "https://fs.blog/feed/"},
+            {"name": "Wait But Why", "url": "https://waitbutwhy.com/feed"},
             # 中文
             {"name": "電腦玩物", "url": "https://www.playpcesor.com/feeds/posts/default?alt=rss"},
             {"name": "少数派", "url": "https://sspai.com/feed"},
             {"name": "閱讀前哨站", "url": "https://readingoutpost.com/feed/"},
-            # 英文
+            # 其他
             {"name": "Hacker News Best", "url": "https://hnrss.org/best"},
-            {"name": "Farnam Street", "url": "https://fs.blog/feed/"},
-            {"name": "Wait But Why", "url": "https://waitbutwhy.com/feed"},
         ],
         "max_items": 8,
         "use_ai_filter": True
@@ -248,10 +253,10 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
 
 請用 JSON 格式回覆，包含：
 1. 選中的文章編號
-2. 每篇文章的一句話重點（說明為什麼這篇對「這位用戶」特別有價值）
+2. 每篇文章的一句話核心論點（這篇文章的主要觀點或內容是什麼，不要說為什麼適合用戶）
 
 格式範例：
-{{"selected": [1, 3, 5], "highlights": {{"1": "首個...", "3": "突破...", "5": "最新..."}}}}
+{{"selected": [1, 3, 5], "highlights": {{"1": "作者認為...", "3": "研究發現...", "5": "新功能可以..."}}}}
 
 只回覆 JSON，不要其他說明。"""
 

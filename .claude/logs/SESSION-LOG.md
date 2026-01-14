@@ -761,4 +761,52 @@ Zeabur（Quick Capture）
 
 ---
 
+## Session: 2026-01-14 - AI 資訊源優化
+
+### 變更摘要
+- 討論並調整 AI 領域資訊源架構
+- 移除低相關性 Reddit 來源
+- 新增 Agent 開發相關來源
+- 新增知識領域深度思考型來源
+- 修改 AI 摘要風格（核心論點取代個人化推薦）
+
+### 決策記錄
+
+**Reddit 精簡**：
+- 移除：r/LocalLLaMA（本地 LLM，與 Claude API 使用場景相關性低）
+- 移除：r/MachineLearning、r/ChatGPT、r/artificial（精簡 Reddit 來源）
+- 保留：r/ClaudeAI（直接相關）
+
+**AI 領域新增**：
+| 來源 | 類型 | 說明 |
+|------|------|------|
+| AI Snake Oil | Blog | AI 批判性觀點，抗衡炒作 |
+| LangChain Blog | Blog | Agent 框架動態 |
+| LlamaIndex Blog | Blog | RAG + Agent |
+| e2b Blog | Blog | Code sandbox、Agent 執行環境 |
+
+**知識領域新增**：
+| 來源 | 類型 | 說明 |
+|------|------|------|
+| Paul Graham | Blog | 經典深度思考，更新少但篇篇值得 |
+| Derek Sivers | Blog | 極簡主義，短文精煉 |
+| Ness Labs | Blog | 學習科學、心智模型 |
+
+**AI 摘要風格調整**：
+- 原本：「為什麼這篇對你有價值」（個人化推薦）
+- 調整：「這篇文章的核心論點是什麼」（內容摘要）
+- 原因：快速判斷是否值得深入，而非被 AI 推銷
+
+### 產出/修改文件
+- `.claude/docs/SOURCES.md` - 更新 AI 領域來源清單
+- `scripts/domain_digest.py` - feeds 更新、prompt 調整
+
+### 待辦事項
+- [ ] 觀察新來源的推播品質
+- [ ] 觀察 AI 摘要風格調整效果
+- [ ] 評估是否需要加入 Twitter KOL（@alexalbert__ 等，需 RSS 橋接）
+- [ ] 建立 HEPTABASE-TEMPLATES.md
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->
