@@ -10,6 +10,7 @@ import feedparser
 import requests
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 # 設定 stdout 編碼
 sys.stdout.reconfigure(encoding='utf-8')
@@ -96,18 +97,19 @@ DOMAIN_CONFIG = {
         "name": "知識/生產力",
         "emoji": "📚",
         "feeds": [
-            # 深度思考型（優先）
-            {"name": "Paul Graham", "url": "http://www.aaronsw.com/2002/feeds/pgessays.rss"},
-            {"name": "Derek Sivers", "url": "https://sive.rs/en.atom"},
-            {"name": "Ness Labs", "url": "https://nesslabs.com/feed"},
-            {"name": "Farnam Street", "url": "https://fs.blog/feed/"},
-            {"name": "Wait But Why", "url": "https://waitbutwhy.com/feed"},
-            # 中文
+            # 高頻來源（每日更新，放前面保證有內容）
+            {"name": "Hacker News Best", "url": "https://hnrss.org/best"},
             {"name": "電腦玩物", "url": "https://www.playpcesor.com/feeds/posts/default?alt=rss"},
             {"name": "少数派", "url": "https://sspai.com/feed"},
             {"name": "閱讀前哨站", "url": "https://readingoutpost.com/feed/"},
-            # 其他
-            {"name": "Hacker News Best", "url": "https://hnrss.org/best"},
+            # 中頻來源（每週更新）
+            {"name": "Ness Labs", "url": "https://nesslabs.com/feed"},
+            {"name": "Farnam Street", "url": "https://fs.blog/feed/"},
+            # 低頻高質量（數月一篇，但篇篇經典）
+            # Paul Graham RSS 無時間戳記，限制數量避免佔據推播
+            {"name": "Paul Graham", "url": "http://www.aaronsw.com/2002/feeds/pgessays.rss", "max_articles": 2},
+            {"name": "Derek Sivers", "url": "https://sive.rs/en.atom"},
+            {"name": "Wait But Why", "url": "https://waitbutwhy.com/feed"},
         ],
         "max_items": 8,
         "use_ai_filter": True
@@ -125,13 +127,20 @@ DOMAIN_CONFIG = {
 }
 
 
-def fetch_rss_feed(url: str, hours: int = 24) -> List[Dict]:
+@retry(
+    stop=stop_after_attempt(2),
+    wait=wait_exponential(multiplier=1, min=1, max=5),
+    retry=retry_if_exception_type(Exception),
+    reraise=False  # RSS 失敗不中斷整個流程
+)
+def fetch_rss_feed(url: str, hours: int = 24, max_articles: int = None) -> List[Dict]:
     """
-    從 RSS feed 獲取最近的文章
+    從 RSS feed 獲取最近的文章（帶 retry）
 
     Args:
         url: RSS feed URL
         hours: 獲取過去幾小時的文章
+        max_articles: 最多返回幾篇文章（用於無時間戳記的 feed）
 
     Returns:
         文章列表
@@ -145,11 +154,18 @@ def fetch_rss_feed(url: str, hours: int = 24) -> List[Dict]:
             # 解析發布時間
             published = None
             if hasattr(entry, 'published_parsed') and entry.published_parsed:
-                published = datetime(*entry.published_parsed[:6])
+                try:
+                    published = datetime(*entry.published_parsed[:6])
+                except (TypeError, ValueError):
+                    pass
             elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
-                published = datetime(*entry.updated_parsed[:6])
+                try:
+                    published = datetime(*entry.updated_parsed[:6])
+                except (TypeError, ValueError):
+                    pass
 
-            # 如果無法解析時間或文章太舊，跳過
+            # 如果無法解析時間，保留文章（假設是新的）
+            # 如果有時間但太舊，則跳過
             if published and published < cutoff:
                 continue
 
@@ -159,6 +175,10 @@ def fetch_rss_feed(url: str, hours: int = 24) -> List[Dict]:
                 "summary": entry.get("summary", "")[:200] if entry.get("summary") else "",
                 "published": published
             })
+
+        # 如果設定了 max_articles，限制返回數量
+        if max_articles:
+            articles = articles[:max_articles]
 
         return articles
     except Exception as e:
@@ -186,7 +206,8 @@ def fetch_domain_articles(domain: str, hours: int = 24) -> List[Dict]:
 
     for feed in config["feeds"]:
         print(f"  Fetching {feed['name']}...")
-        articles = fetch_rss_feed(feed["url"], hours)
+        max_articles = feed.get("max_articles")  # 取得自訂的最大文章數
+        articles = fetch_rss_feed(feed["url"], hours, max_articles=max_articles)
         for article in articles:
             article["source"] = feed["name"]
         all_articles.extend(articles)
@@ -214,9 +235,26 @@ USER_PROFILE = """
 """
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((requests.exceptions.RequestException, Exception)),
+    reraise=True
+)
+def _call_claude_api(client, prompt: str) -> str:
+    """呼叫 Claude API（帶 retry）"""
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=800,  # 增加 token 數，確保有足夠空間生成摘要
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return message.content[0].text.strip()
+
+
 def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> List[Dict]:
     """
     使用 AI 篩選文章並產生摘要（根據用戶偏好）
+    帶 retry 機制，確保摘要不為空
     """
     if not articles:
         return []
@@ -255,19 +293,15 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
 1. 選中的文章編號
 2. 每篇文章的一句話核心論點（這篇文章的主要觀點或內容是什麼，不要說為什麼適合用戶）
 
+**重要**：highlights 中的每個值都必須是有意義的摘要，不可為空字串。
+
 格式範例：
 {{"selected": [1, 3, 5], "highlights": {{"1": "作者認為...", "3": "研究發現...", "5": "新功能可以..."}}}}
 
 只回覆 JSON，不要其他說明。"""
 
     try:
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=500,
-            messages=[{"role": "user", "content": prompt}]
-        )
-
-        response = message.content[0].text.strip()
+        response = _call_claude_api(client, prompt)
 
         # 移除 markdown 程式碼區塊包裝
         if response.startswith("```"):
@@ -285,23 +319,39 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
             selected_indices = [int(x) - 1 for x in data.get("selected", [])]
             highlights = data.get("highlights", {})
 
+            # 檢查是否有空的 highlight
+            empty_highlights = [k for k, v in highlights.items() if not v or not v.strip()]
+            if empty_highlights:
+                print(f"  警告：偵測到空的 highlight: {empty_highlights}")
+
             filtered = []
             for i in selected_indices:
                 if 0 <= i < len(articles):
                     article = articles[i].copy()
-                    # 加入 AI 生成的重點摘要
-                    article["highlight"] = highlights.get(str(i + 1), "")
+                    # 加入 AI 生成的重點摘要，如果為空則使用 fallback
+                    highlight = highlights.get(str(i + 1), "").strip()
+                    if not highlight:
+                        # Fallback：使用原文摘要或「待補充」
+                        highlight = article.get('summary', '')[:80] or "（AI 摘要生成失敗）"
+                        print(f"  使用 fallback highlight: {article.get('title', '')[:30]}")
+                    article["highlight"] = highlight
                     filtered.append(article)
 
-            return filtered[:max_items]
-        except json.JSONDecodeError:
-            # 如果 JSON 解析失敗，嘗試舊格式（純編號）
-            selected_indices = [int(x.strip()) - 1 for x in response.split(",") if x.strip().isdigit()]
-            filtered = [articles[i] for i in selected_indices if 0 <= i < len(articles)]
+            if not filtered:
+                print(f"  警告：AI 篩選後沒有文章，使用前 {max_items} 篇")
+                return articles[:max_items]
+
             return filtered[:max_items]
 
+        except json.JSONDecodeError as e:
+            print(f"  JSON 解析失敗: {e}")
+            print(f"  Response: {response[:200]}")
+            # Fallback：返回前 N 篇
+            return articles[:max_items]
+
     except Exception as e:
-        print(f"  AI filter error: {e}")
+        print(f"  AI filter error (已重試 3 次): {e}")
+        # Fallback：返回前 N 篇，不附加 AI 摘要
         return articles[:max_items]
 
 
@@ -339,8 +389,14 @@ def format_domain_message(articles: List[Dict], domain: str, date_str: str) -> s
     return "\n".join(lines)
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type(requests.exceptions.RequestException),
+    reraise=True
+)
 def send_telegram_message(text: str) -> bool:
-    """發送 Telegram 訊息"""
+    """發送 Telegram 訊息（帶 retry）"""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
     payload = {
@@ -350,13 +406,13 @@ def send_telegram_message(text: str) -> bool:
         "disable_web_page_preview": True
     }
 
-    response = requests.post(url, json=payload)
+    response = requests.post(url, json=payload, timeout=10)
     if response.status_code != 200:
         print(f"  Telegram API 錯誤: {response.status_code}")
         print(f"  Response: {response.text}")
-        print(f"  Chat ID: {TELEGRAM_CHAT_ID}")
-        print(f"  Token (前10字): {TELEGRAM_BOT_TOKEN[:10] if TELEGRAM_BOT_TOKEN else 'None'}...")
-    return response.status_code == 200
+        # 不記錄敏感資訊（Chat ID, Token）
+        response.raise_for_status()  # 觸發 retry
+    return True
 
 
 def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):

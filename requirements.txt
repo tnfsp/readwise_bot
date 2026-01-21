@@ -10,6 +10,9 @@ feedparser>=6.0.0
 # 環境變數管理
 python-dotenv>=1.0.0
 
+# Retry 機制
+tenacity>=8.2.0
+
 # Web 框架（Webhook 模式）
 flask>=3.0.0
 gunicorn>=21.0.0

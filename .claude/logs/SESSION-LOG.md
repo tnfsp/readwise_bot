@@ -809,4 +809,111 @@ Zeabur（Quick Capture）
 
 ---
 
+## Session: 2026-01-21 - 程式碼審查 + 知識領域推播修復
+
+### 變更摘要
+- 完成專案程式碼全面審查
+- 修復知識/生產力領域推播問題（Paul Graham RSS feed 無時間戳記）
+- 修復安全性問題（移除 Token 日誌輸出）
+- 增強 RSS feed 解析容錯能力
+
+### 決策記錄
+
+**知識領域推播問題診斷**：
+- 根本原因：Paul Graham RSS feed (219 篇文章) 完全無時間戳記
+- 導致時間過濾失效，AI 每次都從 219 篇經典文章中選擇
+- 症狀：每次推播只有 Paul Graham，其他來源被忽略
+
+**解決方案**：
+- 調整 RSS feeds 順序（高頻來源優先）
+- 新增 `max_articles` 參數，限制無時間戳記 feed 的數量
+- Paul Graham 限制為 2 篇，確保其他來源有推播空間
+
+**程式碼審查發現的問題**：
+1. 安全性：Telegram API 錯誤日誌可能洩露 Token（已移除）
+2. 可靠性：RSS feed 時間解析缺少容錯（已加入 try-except）
+3. 邏輯：無時間戳記的 feed 會繞過時間過濾（已修復）
+
+### 產出/修改文件
+- `scripts/domain_digest.py` - 修復三個問題：
+  - RSS feeds 順序調整（高頻優先）
+  - 新增 `max_articles` 參數支援
+  - 移除 Token 日誌輸出
+  - 增強時間解析容錯
+
+### 測試結果
+修復後的知識領域推播（過去 24h）：
+- Hacker News Best: 7 篇
+- 少數派: 2 篇
+- Paul Graham: 2 篇（限制生效）
+- AI 精選 4 篇推播
+- ✅ 內容多元化達成
+
+### 待辦事項
+- [x] 程式碼審查
+- [x] 修復知識領域推播
+- [x] 測試修復效果
+- [ ] 觀察明天自動推播是否正常
+- [ ] 考慮是否需要清理過時的測試腳本
+
+---
+
+## Session: 2026-01-21 下午 - 清理 + Retry 機制 + 空摘要修復
+
+### 變更摘要
+- 清理過時的測試腳本（移到 archive 目錄）
+- 實作全面的 API retry 機制
+- 修復 AI 摘要有時為空的問題
+- 增加 max_tokens 至 800，確保摘要完整
+
+### 決策記錄
+
+**測試腳本清理**：
+- 移動 `test_telegram_receive*.py` 到 `scripts/archive/`
+- 保留 `test_reader_api.py` 和 `test_reader_save.py`（仍有用）
+
+**Retry 機制實作**：
+使用 `tenacity` 套件為關鍵 API 加入 retry：
+- **Claude API** (`_call_claude_api`): 3 次重試，指數退避 (2-10 秒)
+- **Telegram API** (`send_telegram_message`): 3 次重試，指數退避
+- **RSS Feed** (`fetch_rss_feed`): 2 次重試，失敗不中斷流程
+
+**AI 摘要為空問題修復**：
+- 根本原因：`max_tokens=500` 有時不足以生成完整 JSON
+- 解決方案：
+  - 增加 `max_tokens` 至 800
+  - Prompt 明確要求「highlights 不可為空字串」
+  - 偵測空摘要並使用 fallback（原文摘要或標記為失敗）
+  - 增加詳細的錯誤日誌
+
+**Retry 策略**：
+- Claude API：嚴格重試（失敗則拋出例外）
+- Telegram API：嚴格重試（推播必須成功）
+- RSS Feed：寬鬆重試（單一 feed 失敗不影響其他）
+
+### 產出/修改文件
+- `requirements.txt` - 新增 `tenacity>=8.2.0`
+- `scripts/domain_digest.py` - 主要修改：
+  - 新增 `@retry` decorator 到關鍵函數
+  - 新增 `_call_claude_api()` 輔助函數
+  - AI 篩選加入空摘要偵測與 fallback
+  - Telegram 推播改為觸發 retry（`raise_for_status()`）
+- `scripts/archive/` - 移入過時測試腳本
+
+### 測試結果
+修復後的推播測試：
+- 知識領域：4 篇精選，每篇都有完整 AI 摘要 ✅
+- AI 領域：10 篇精選，每篇都有完整 AI 摘要 ✅
+- Retry 機制：透過 `@retry` decorator 自動重試 ✅
+
+### 待辦事項
+- [x] 清理過時測試腳本
+- [x] 實作 API retry 機制
+- [x] 修復 AI 摘要為空問題
+- [x] 測試修復效果
+- [ ] 觀察明天自動推播是否穩定
+- [ ] 考慮為 Readwise API 也加入 retry（目前僅用於 Quick Capture）
+
+---
+
 <!-- 新的 session 記錄請加在這裡 -->
