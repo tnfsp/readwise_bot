@@ -346,13 +346,26 @@ def ai_filter_articles(articles: List[Dict], domain: str, max_items: int) -> Lis
         except json.JSONDecodeError as e:
             print(f"  JSON 解析失敗: {e}")
             print(f"  Response: {response[:200]}")
-            # Fallback：返回前 N 篇
-            return articles[:max_items]
+            # Fallback：返回前 N 篇，使用原文摘要
+            fallback_articles = []
+            for article in articles[:max_items]:
+                article_copy = article.copy()
+                summary = article.get('summary', '')[:80]
+                article_copy["highlight"] = summary if summary else "（JSON 解析失敗）"
+                fallback_articles.append(article_copy)
+            return fallback_articles
 
     except Exception as e:
         print(f"  AI filter error (已重試 3 次): {e}")
-        # Fallback：返回前 N 篇，不附加 AI 摘要
-        return articles[:max_items]
+        # Fallback：返回前 N 篇，使用原文摘要作為 highlight
+        fallback_articles = []
+        for article in articles[:max_items]:
+            article_copy = article.copy()
+            # 使用原文摘要或標題作為 fallback highlight
+            summary = article.get('summary', '')[:80]
+            article_copy["highlight"] = summary if summary else "（無法生成 AI 摘要）"
+            fallback_articles.append(article_copy)
+        return fallback_articles
 
 
 def format_domain_message(articles: List[Dict], domain: str, date_str: str) -> str:
