@@ -25,20 +25,45 @@ LANGUAGE = os.getenv("LANGUAGE", "zh-TW")
 # 領域分類
 DOMAINS = {
     "醫學": ["醫學", "ECMO", "VAD", "心臟", "cardiac", "surgery", "NEJM", "Lancet", "LITFL", "EMCrit", "PubMed"],
-    "AI": ["AI", "Claude", "GPT", "LLM", "機器學習", "deep learning", "anthropic", "openai"],
-    "國際": ["國際", "政治", "geopolitics", "china", "taiwan", "war", "經濟"],
+    "AI": ["AI", "Claude", "GPT", "LLM", "機器學習", "deep learning", "anthropic", "openai", "agent"],
+    "國際": ["國際", "政治", "geopolitics", "china", "taiwan", "war", "經濟", "貿易"],
+    "投資": ["投資", "理財", "ETF", "股票", "基金", "資產配置", "財務自由", "FIRE", "investing", "portfolio"],
+    "系統效率": ["生產力", "效率", "workflow", "automation", "時間管理", "深度工作", "productivity", "creator"],
     "知識": ["筆記", "PKM", "Obsidian", "Heptabase", "Notion", "知識管理", "學習"],
-    "生產力": ["生產力", "效率", "workflow", "automation", "工具"],
-    "生活": ["理財", "健康", "生活", "投資"]
+    "生活": ["健康", "運動", "睡眠", "飲食"]
 }
 
 # 用戶關注領域（用於 AI 篩選）
 USER_INTERESTS = """
-用戶關注領域：
-1. 醫學：心臟外科、ECMO、VAD、葉克膜、臨床研究
-2. AI：Claude Code CLI、LLM 應用、AI 工具
-3. 國際情勢：地緣政治、國際關係
-4. 知識管理：PKM、筆記方法、學習技巧
+用戶關注領域（依優先序）：
+
+1. 醫學（核心專業）：
+   - 心臟外科、ECMO、VAD、葉克膜
+   - 臨床研究、手術技術
+
+2. 投資理財（財富建設）：
+   - 長期投資策略、ETF、指數投資
+   - 資產配置、複利思維
+   - 財務獨立、被動收入
+
+3. 系統效率（個人品牌基礎）：
+   - 生產力系統、工作流優化
+   - 時間管理、深度工作
+   - 內容創作方法論
+
+4. AI（效率工具）：
+   - Claude Code CLI、AI Agent 開發
+   - LLM 實際應用、AI 工作流
+   - 醫療 AI 應用
+
+5. 國際情勢（世界觀）：
+   - 地緣政治、台海情勢
+   - 全球經濟趨勢
+
+降低優先：
+- 泛 PKM / 筆記方法論（系統已成熟）
+- 純技術新聞（非直接相關）
+- 工具評測文（工具太多反而分心）
 """
 
 def validate_config():

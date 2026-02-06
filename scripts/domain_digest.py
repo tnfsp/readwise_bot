@@ -38,25 +38,22 @@ DOMAIN_CONFIG = {
         "name": "AI",
         "emoji": "🤖",
         "feeds": [
-            # 核心 Blog
+            # 核心 Blog（必讀）
             {"name": "Simon Willison", "url": "https://simonwillison.net/atom/everything/"},
             {"name": "Anthropic", "url": "https://www.anthropic.com/rss.xml"},
+            {"name": "AI Snake Oil", "url": "https://www.aisnakeoil.com/feed"},
+            # 公司官方（重要更新）
             {"name": "OpenAI", "url": "https://openai.com/blog/rss.xml"},
             {"name": "Google AI", "url": "https://blog.google/technology/ai/rss/"},
-            {"name": "Hugging Face", "url": "https://huggingface.co/blog/feed.xml"},
-            {"name": "AI Snake Oil", "url": "https://www.aisnakeoil.com/feed"},
-            # Newsletter
+            # Newsletter（精選）
             {"name": "Latent Space", "url": "https://www.latent.space/feed"},
             {"name": "Import AI", "url": "https://importai.substack.com/feed"},
-            {"name": "Ben's Bites", "url": "https://bensbites.beehiiv.com/feed"},
             # Agent 開發
             {"name": "LangChain Blog", "url": "https://blog.langchain.dev/rss/"},
-            {"name": "LlamaIndex Blog", "url": "https://www.llamaindex.ai/blog/rss.xml"},
-            {"name": "e2b Blog", "url": "https://e2b.dev/blog/rss.xml"},
-            # Reddit（精簡）
+            # Reddit
             {"name": "r/ClaudeAI", "url": "https://www.reddit.com/r/ClaudeAI/top/.rss?t=day"},
         ],
-        "max_items": 10,
+        "max_items": 8,
         "use_ai_filter": True
     },
     "international": {
@@ -97,21 +94,17 @@ DOMAIN_CONFIG = {
         "name": "知識/生產力",
         "emoji": "📚",
         "feeds": [
-            # 高頻來源（每日更新，放前面保證有內容）
+            # 高頻來源（每日更新）
             {"name": "Hacker News Best", "url": "https://hnrss.org/best"},
-            {"name": "電腦玩物", "url": "https://www.playpcesor.com/feeds/posts/default?alt=rss"},
             {"name": "少数派", "url": "https://sspai.com/feed"},
             {"name": "閱讀前哨站", "url": "https://readingoutpost.com/feed/"},
             # 中頻來源（每週更新）
-            {"name": "Ness Labs", "url": "https://nesslabs.com/feed"},
             {"name": "Farnam Street", "url": "https://fs.blog/feed/"},
             # 低頻高質量（數月一篇，但篇篇經典）
-            # Paul Graham RSS 無時間戳記，限制數量避免佔據推播
             {"name": "Paul Graham", "url": "http://www.aaronsw.com/2002/feeds/pgessays.rss", "max_articles": 2},
             {"name": "Derek Sivers", "url": "https://sive.rs/en.atom"},
-            {"name": "Wait But Why", "url": "https://waitbutwhy.com/feed"},
         ],
-        "max_items": 8,
+        "max_items": 6,
         "use_ai_filter": True
     },
     "claude-code": {
@@ -123,6 +116,41 @@ DOMAIN_CONFIG = {
         "max_items": 5,
         "use_ai_filter": True,  # 產生版本摘要
         "default_hours": 168  # 一週內的更新
+    },
+    "finance": {
+        "name": "投資理財",
+        "emoji": "💰",
+        "feeds": [
+            # 每日商業新聞
+            {"name": "Morning Brew", "url": "https://www.morningbrew.com/daily/rss"},
+            {"name": "Finimize", "url": "https://www.finimize.com/wp/feed/"},
+            # 投資觀點
+            {"name": "A Wealth of Common Sense", "url": "https://awealthofcommonsense.com/feed/"},
+            {"name": "Of Dollars And Data", "url": "https://ofdollarsanddata.com/feed/"},
+            {"name": "Collaborative Fund", "url": "https://collabfund.com/feed/"},
+            # Reddit
+            {"name": "r/investing", "url": "https://www.reddit.com/r/investing/top/.rss?t=day"},
+            {"name": "r/Bogleheads", "url": "https://www.reddit.com/r/Bogleheads/top/.rss?t=day"},
+        ],
+        "max_items": 8,
+        "use_ai_filter": True
+    },
+    "creator": {
+        "name": "系統效率",
+        "emoji": "🎯",
+        "feeds": [
+            # 系統思維 & 效率
+            {"name": "Ali Abdaal", "url": "https://aliabdaal.com/feed/"},
+            {"name": "Tiago Forte", "url": "https://fortelabs.com/feed/"},
+            {"name": "Cal Newport", "url": "https://calnewport.com/feed/"},
+            {"name": "James Clear", "url": "https://jamesclear.com/feed"},
+            # 創作者經濟
+            {"name": "The Publish Press", "url": "https://www.publishpress.com/feed/"},
+            # Reddit
+            {"name": "r/productivity", "url": "https://www.reddit.com/r/productivity/top/.rss?t=week"},
+        ],
+        "max_items": 6,
+        "use_ai_filter": True
     }
 }
 
