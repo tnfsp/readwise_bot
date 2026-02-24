@@ -2,18 +2,19 @@ name: Daily Digest Push
 
 on:
   schedule:
-    # 09:00 台灣 = 01:00 UTC
-    - cron: '0 1 * * *'    # Claude Code 更新 (台灣 09:00)
+    - cron: '0 1 * * *'    # 09:00 TW — Claude Code 更新 + Inbox 推播
 
   workflow_dispatch:
     inputs:
-      domain:
-        description: 'Domain to push'
+      task:
+        description: 'Task to run'
         required: true
-        default: 'claude-code'
+        default: 'all'
         type: choice
         options:
+          - all
           - claude-code
+          - inbox
 
 jobs:
   push-digest:
@@ -33,7 +34,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run domain digest
+      - name: Run Claude Code digest
+        if: ${{ github.event_name == 'schedule' || inputs.task == 'all' || inputs.task == 'claude-code' }}
         env:
           READWISE_TOKEN: ${{ secrets.READWISE_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -43,9 +45,20 @@ jobs:
           cd scripts
           python domain_digest.py claude-code
 
+      - name: Run Inbox digest
+        if: ${{ github.event_name == 'schedule' || inputs.task == 'all' || inputs.task == 'inbox' }}
+        env:
+          READWISE_TOKEN: ${{ secrets.READWISE_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cd scripts
+          python daily_digest.py
+
       - name: Summary
         run: |
           echo "### Daily Digest Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Domain: claude-code" >> $GITHUB_STEP_SUMMARY
+          echo "- Task: ${{ inputs.task || 'all (scheduled)' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
           echo "- Status: Success" >> $GITHUB_STEP_SUMMARY
