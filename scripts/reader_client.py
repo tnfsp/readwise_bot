@@ -1,8 +1,9 @@
 """
 Readwise Reader API 客戶端
 """
+import uuid
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 from config import READWISE_TOKEN, READWISE_BASE_URL
 
@@ -23,7 +24,7 @@ def get_recent_documents(hours: int = 24, location: str = "feed") -> List[Dict]:
     Returns:
         文章列表
     """
-    since = (datetime.now() - timedelta(hours=hours)).isoformat()
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
 
     all_docs = []
     next_cursor = None
@@ -101,12 +102,15 @@ def update_document_tags(doc_id: str, tags: List[str]) -> bool:
         json={"tags": tags}
     )
 
-    return response.status_code == 200
+    if response.status_code not in (200, 204):
+        print(f"Error updating tags for {doc_id}: {response.status_code} {response.text[:200]}")
+
+    return response.status_code in (200, 204)
 
 
 def add_tag_to_document(doc_id: str, tag: str) -> bool:
     """
-    為文章添加單一 tag
+    為文章添加單一 tag（效能優化版：不拉全文）
 
     Args:
         doc_id: 文章 ID
@@ -115,11 +119,21 @@ def add_tag_to_document(doc_id: str, tag: str) -> bool:
     Returns:
         是否成功
     """
-    # 先獲取現有 tags
-    doc = get_document_content(doc_id)
-    if not doc:
+    # 只讀取 tags，不帶 withHtmlContent（加 tag 不需要全文）
+    response = requests.get(
+        f"{READWISE_BASE_URL}/list/",
+        headers=get_headers(),
+        params={"id": doc_id}
+    )
+    if response.status_code != 200:
+        print(f"Error fetching document {doc_id}: {response.status_code}")
         return False
 
+    results = response.json().get("results", [])
+    if not results:
+        return False
+
+    doc = results[0]
     tags_data = doc.get("tags", [])
     existing_tags = []
     for t in tags_data:
@@ -229,8 +243,8 @@ def save_note(
     html_lines = content.replace("\n", "<br>")
     html_content = f"<article><p>{html_lines}</p></article>"
 
-    # 使用虛擬 URL（Reader 需要 URL 欄位）
-    fake_url = f"https://tg-capture.local/{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    # 使用虛擬 URL（Reader 需要 URL 欄位，用 UUID 確保唯一性）
+    fake_url = f"https://tg-capture.local/{uuid.uuid4()}"
 
     payload = {
         "url": fake_url,
