@@ -11,7 +11,7 @@ import json
 import argparse
 import feedparser
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Dict, Set
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -22,6 +22,7 @@ from config import (
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID,
     ANTHROPIC_API_KEY,
+    CLAUDE_MODEL,
     validate_config
 )
 
@@ -70,18 +71,18 @@ def fetch_rss_feed(url: str, hours: int = 24) -> List[Dict]:
     try:
         feed = feedparser.parse(url)
         articles = []
-        cutoff = datetime.now() - timedelta(hours=hours)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         for entry in feed.entries[:20]:
             published = None
             if hasattr(entry, 'published_parsed') and entry.published_parsed:
                 try:
-                    published = datetime(*entry.published_parsed[:6])
+                    published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
                 except (TypeError, ValueError):
                     pass
             elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
                 try:
-                    published = datetime(*entry.updated_parsed[:6])
+                    published = datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)
                 except (TypeError, ValueError):
                     pass
 
@@ -133,7 +134,7 @@ def fetch_domain_articles(domain: str, hours: int = 24) -> List[Dict]:
 def _call_claude_api(client, prompt: str) -> str:
     """呼叫 Claude API（帶 retry）"""
     message = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=CLAUDE_MODEL,
         max_tokens=400,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -256,7 +257,7 @@ def _save_sent_versions(versions: Set[str]):
     SENT_RELEASES_PATH.parent.mkdir(parents=True, exist_ok=True)
     data = {
         "versions": sorted(versions),
-        "last_updated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     SENT_RELEASES_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 

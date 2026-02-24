@@ -4,7 +4,7 @@ AI 篩選模組 - 使用 Claude 進行文章篩選與摘要
 import json
 from typing import List, Dict, Optional
 import anthropic
-from config import ANTHROPIC_API_KEY, USER_INTERESTS, DOMAINS
+from config import ANTHROPIC_API_KEY, USER_INTERESTS, DOMAINS, CLAUDE_MODEL
 
 
 def get_client():
@@ -92,7 +92,7 @@ def filter_and_summarize_batch(articles: List[Dict], max_articles: int = 10) -> 
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=2000,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -108,7 +108,12 @@ def filter_and_summarize_batch(articles: List[Dict], max_articles: int = 10) -> 
         else:
             json_str = response_text
 
-        data = json.loads(json_str.strip())
+        try:
+            data = json.loads(json_str.strip())
+        except json.JSONDecodeError as je:
+            print(f"JSON parse error: {je}")
+            print(f"Claude raw response: {response_text}")
+            raise
         results = data.get("results", [])
 
         # 合併結果
@@ -210,7 +215,7 @@ def generate_title(content: str, max_length: int = 30) -> str:
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=100,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -253,14 +258,12 @@ def detect_domain(content: str) -> str:
     # 如果簡單規則無法判斷，使用 AI
     client = get_client()
 
+    # 動態從 config.DOMAINS 生成合法領域清單
+    valid_domains = list(DOMAINS.keys()) + ["其他"]
+    domain_list_str = "\n".join(f"- {d}" for d in valid_domains)
+
     prompt = f"""判斷以下內容屬於哪個領域，只回覆領域名稱：
-- 醫學
-- AI
-- 國際
-- 知識
-- 生產力
-- 生活
-- 其他
+{domain_list_str}
 
 內容：
 {content[:300]}
@@ -269,15 +272,13 @@ def detect_domain(content: str) -> str:
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=20,
             messages=[{"role": "user", "content": prompt}]
         )
 
         domain = message.content[0].text.strip()
 
-        # 驗證返回值
-        valid_domains = ["醫學", "AI", "國際", "知識", "生產力", "生活", "其他"]
         if domain in valid_domains:
             return domain
         else:
@@ -302,16 +303,9 @@ def process_capture_content(content: str, is_forward: bool = False) -> Dict:
     title = generate_title(content)
     domain = detect_domain(content)
 
-    # 領域對應的 Tag
-    domain_tags = {
-        "醫學": "@醫學",
-        "AI": "@AI",
-        "國際": "@國際",
-        "知識": "@知識",
-        "生產力": "@生產力",
-        "生活": "@生活",
-        "其他": "@其他"
-    }
+    # 動態從 config.DOMAINS 生成領域 tag mapping（修 #7）
+    domain_tags = {d: f"@{d}" for d in DOMAINS}
+    domain_tags["其他"] = "@其他"
 
     return {
         "title": title,
