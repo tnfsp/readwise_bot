@@ -92,7 +92,7 @@ def filter_and_summarize_batch(articles: List[Dict], max_articles: int = 10) -> 
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6-20250217",
             max_tokens=2000,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -210,7 +210,7 @@ def generate_title(content: str, max_length: int = 30) -> str:
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6-20250217",
             max_tokens=100,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -269,7 +269,7 @@ def detect_domain(content: str) -> str:
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6-20250217",
             max_tokens=20,
             messages=[{"role": "user", "content": prompt}]
         )

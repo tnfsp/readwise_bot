@@ -129,7 +129,7 @@ def fetch_domain_articles(domain: str, hours: int = 24) -> List[Dict]:
 def _call_claude_api(client, prompt: str) -> str:
     """呼叫 Claude API（帶 retry）"""
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6-20250217",
         max_tokens=400,
         messages=[{"role": "user", "content": prompt}]
     )
