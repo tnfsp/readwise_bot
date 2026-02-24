@@ -13,10 +13,14 @@ from datetime import datetime
 # 設定 stdout 編碼
 sys.stdout.reconfigure(encoding='utf-8')
 
-from config import validate_config
+from config import validate_config, DOMAINS
 from reader_client import get_recent_documents, add_tag_to_document
 from ai_filter import filter_and_summarize_batch, simple_filter
 from telegram_bot import send_message, format_daily_digest
+
+# 從 config.py DOMAINS 生成 tag mapping
+DOMAIN_TAGS = {domain: f"@{domain}" for domain in DOMAINS}
+DOMAIN_TAGS["其他"] = "@其他"
 
 
 def run_daily_digest(use_ai: bool = True, dry_run: bool = False):
@@ -106,22 +110,13 @@ def run_daily_digest(use_ai: bool = True, dry_run: bool = False):
 
             # 更新文章 Tag
             print("\n  更新文章標籤...")
-            # 領域對應 Tag
-            domain_tags = {
-                "AI": "@AI",
-                "國際": "@國際",
-                "知識": "@知識",
-                "醫學": "@醫學",
-                "生產力": "@生產力",
-                "其他": "@其他"
-            }
             for article in push_articles:
                 doc_id = article.get("id")
                 if doc_id:
                     add_tag_to_document(doc_id, "#推播")
-                    # 加入領域 Tag
+                    # 加入領域 Tag（從 config.py DOMAINS 統一生成）
                     domain = article.get("domain", "其他")
-                    domain_tag = domain_tags.get(domain, f"@{domain}")
+                    domain_tag = DOMAIN_TAGS.get(domain, f"@{domain}")
                     add_tag_to_document(doc_id, domain_tag)
             print("  ✓ 標籤更新完成")
         else:
