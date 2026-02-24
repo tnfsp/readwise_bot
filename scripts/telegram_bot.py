@@ -26,7 +26,7 @@ def send_message(text: str, parse_mode: str = "HTML") -> bool:
         "disable_web_page_preview": True
     }
 
-    response = requests.post(url, json=payload)
+    response = requests.post(url, json=payload, timeout=15)
 
     if response.status_code != 200:
         print(f"Error sending message: {response.status_code}")
