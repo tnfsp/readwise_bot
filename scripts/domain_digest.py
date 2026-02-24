@@ -5,12 +5,15 @@ Claude Code 版本更新推播
 只推播 major/minor release，跳過 patch。
 """
 import sys
+import os
 import re
+import json
 import argparse
 import feedparser
 import requests
 from datetime import datetime, timedelta
-from typing import List, Dict
+from pathlib import Path
+from typing import List, Dict, Set
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -228,6 +231,32 @@ def send_telegram_message(text: str) -> bool:
     return True
 
 
+# --------------- 去重機制 ---------------
+
+SENT_RELEASES_PATH = Path(__file__).parent / "data" / "sent_releases.json"
+
+
+def _load_sent_versions() -> Set[str]:
+    """讀取已推播過的版本號"""
+    if not SENT_RELEASES_PATH.exists():
+        return set()
+    try:
+        data = json.loads(SENT_RELEASES_PATH.read_text(encoding="utf-8"))
+        return set(data.get("versions", []))
+    except (json.JSONDecodeError, OSError):
+        return set()
+
+
+def _save_sent_versions(versions: Set[str]):
+    """寫入已推播的版本號"""
+    SENT_RELEASES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    data = {
+        "versions": sorted(versions),
+        "last_updated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    SENT_RELEASES_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):
     """執行 Claude Code 推播"""
     config = DOMAIN_CONFIG.get(domain)
@@ -270,6 +299,23 @@ def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):
             send_telegram_message("🔧 <b>Claude Code 更新</b>\n\n過去一週只有 patch 更新，無 major/minor release。")
         return True
 
+    # 2.5. 去重：排除已推播的版本
+    sent_versions = _load_sent_versions()
+    before_dedup = len(filtered)
+    filtered = [
+        a for a in filtered
+        if (parse_version(a.get("title", "")) is None)
+        or ("{}.{}.{}".format(*parse_version(a.get("title", ""))) not in sent_versions)
+    ]
+    deduped = before_dedup - len(filtered)
+    if deduped:
+        print(f"  跳過 {deduped} 個已推播的版本")
+    print(f"  去重後剩 {len(filtered)} 個新 release")
+
+    if not filtered:
+        print("  所有 release 都已推播過")
+        return True
+
     # 3. AI 摘要 + 推播
     print(f"\n[3/3] 產生摘要並推播...")
     summarized = ai_summarize_release(filtered[:config["max_items"]])
@@ -286,6 +332,18 @@ def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):
     else:
         success = send_telegram_message(message)
         print(f"  {'✓ 推播成功' if success else '✗ 推播失敗'}")
+
+        if success:
+            # 記錄已推播的版本號
+            new_versions = set()
+            for a in summarized:
+                ver = parse_version(a.get("title", ""))
+                if ver:
+                    new_versions.add(f"{ver[0]}.{ver[1]}.{ver[2]}")
+            if new_versions:
+                all_versions = sent_versions | new_versions
+                _save_sent_versions(all_versions)
+                print(f"  已記錄 {len(new_versions)} 個版本號到 sent_releases.json")
 
     print("\n" + "=" * 60)
     print("完成")
