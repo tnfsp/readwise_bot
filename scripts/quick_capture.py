@@ -12,7 +12,6 @@ Quick Capture - Telegram Bot 快速捕捉到 Reader
     python quick_capture.py --test   # 測試模式（處理一則訊息後退出）
 """
 import sys
-import time
 import argparse
 import requests
 from datetime import datetime
@@ -22,9 +21,7 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-from message_parser import parse_telegram_message, determine_save_action
-from reader_client import save_url, save_note
-from ai_filter import process_capture_content
+from capture_service import process_message, format_reply
 
 
 # ============================================================
@@ -58,132 +55,9 @@ def send_reply(chat_id: int, text: str, parse_mode: str = "HTML"):
         "disable_web_page_preview": True
     }
     try:
-        requests.post(url, json=payload)
+        requests.post(url, json=payload, timeout=15)
     except Exception as e:
         print(f"Error sending reply: {e}")
-
-
-# ============================================================
-# 訊息處理邏輯
-# ============================================================
-
-def process_message(message: dict) -> dict:
-    """
-    處理單一訊息
-
-    Args:
-        message: Telegram 訊息物件
-
-    Returns:
-        處理結果
-    """
-    # 1. 解析訊息
-    parsed = parse_telegram_message(message)
-    action = determine_save_action(parsed)
-
-    result = {
-        "success": False,
-        "case_type": parsed.case_type,
-        "title": None,
-        "domain": None,
-        "source": parsed.source_label,
-        "url": None,
-        "doc_id": None,
-        "error": None
-    }
-
-    # 2. 根據類型處理
-    try:
-        if action["save_method"] == "save_url":
-            # 有 URL：存入文章
-            url = action["url"]
-            result["url"] = url
-
-            # tags 清空
-            tags = []
-
-            # 用戶評論
-            user_note = action.get("user_note")
-            if parsed.is_forward and parsed.channel_name:
-                # 加入來源資訊
-                source_note = f"來源：{parsed.channel_name}"
-                if user_note:
-                    user_note = f"{source_note}\n\n{user_note}"
-                else:
-                    user_note = source_note
-
-            # 存入 Reader
-            doc = save_url(url=url, tags=tags, notes=user_note)
-
-            if doc:
-                result["success"] = True
-                result["doc_id"] = doc.get("id")
-                result["title"] = doc.get("title") or url[:50]
-            else:
-                result["error"] = "存入失敗"
-
-        elif action["save_method"] == "save_note":
-            # 純文字：存入筆記
-            content = action["content"]
-
-            # 使用 AI 生成標題
-            ai_result = process_capture_content(content)
-            title = ai_result["title"]
-
-            result["title"] = title
-
-            # tags 清空
-            tags = []
-
-            # 存入 Reader
-            doc = save_note(
-                content=content,
-                title=title,
-                source_name=parsed.source_label,
-                tags=tags
-            )
-
-            if doc:
-                result["success"] = True
-                result["doc_id"] = doc.get("id")
-            else:
-                result["error"] = "存入失敗"
-
-    except Exception as e:
-        result["error"] = str(e)
-
-    return result
-
-
-def format_reply(result: dict) -> str:
-    """格式化回覆訊息"""
-    if result["success"]:
-        lines = ["<b>OK</b> 已存入 Reader"]
-
-        if result["title"]:
-            # 截斷過長的標題
-            title = result["title"][:40]
-            lines.append(f"<b>{title}</b>")
-
-        if result["domain"]:
-            domain_emoji = {
-                "醫學": "🏥",
-                "AI": "🤖",
-                "國際": "🌍",
-                "知識": "📚",
-                "生產力": "⚡",
-                "生活": "🏠",
-                "其他": "📌"
-            }
-            emoji = domain_emoji.get(result["domain"], "📌")
-            lines.append(f"{emoji} {result['domain']}")
-
-        if result["source"] and result["source"] != "我的筆記":
-            lines.append(f"📍 {result['source']}")
-
-        return "\n".join(lines)
-    else:
-        return f"Error 存入失敗\n{result.get('error', '未知錯誤')}"
 
 
 # ============================================================

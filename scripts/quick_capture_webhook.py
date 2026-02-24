@@ -4,11 +4,13 @@ Quick Capture - Webhook 版本（適用於 Zeabur 部署）
 部署步驟：
 1. 推送到 GitHub
 2. 在 Zeabur 連接 GitHub repo
-3. 設定環境變數（READWISE_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ANTHROPIC_API_KEY）
+3. 設定環境變數（READWISE_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ANTHROPIC_API_KEY,
+   WEBHOOK_SECRET）
 4. 部署後取得 URL，設定 Telegram Webhook
 """
 import os
 import sys
+from datetime import datetime
 
 # 確保可以 import 同目錄的模組
 scripts_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,18 +22,15 @@ root_dir = os.path.dirname(scripts_dir)
 load_dotenv(os.path.join(root_dir, '.env'))
 
 from flask import Flask, request, jsonify
-from datetime import datetime
 import requests
 
 # 直接從環境變數讀取（避免 config.py 路徑問題）
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-READWISE_TOKEN = os.getenv("READWISE_TOKEN")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 
-from message_parser import parse_telegram_message, determine_save_action
-from reader_client import save_url, save_note
-from ai_filter import process_capture_content, detect_domain
+# 共用邏輯從 capture_service 引入
+from capture_service import process_message, format_reply
 
 app = Flask(__name__)
 
@@ -46,112 +45,17 @@ def send_reply(chat_id: int, text: str, parse_mode: str = "HTML"):
         "disable_web_page_preview": True
     }
     try:
-        requests.post(url, json=payload)
+        requests.post(url, json=payload, timeout=15)
     except Exception as e:
         print(f"Error sending reply: {e}")
 
 
-def process_message(message: dict) -> dict:
-    """處理單一訊息"""
-    parsed = parse_telegram_message(message)
-    action = determine_save_action(parsed)
-
-    result = {
-        "success": False,
-        "case_type": parsed.case_type,
-        "title": None,
-        "domain": None,
-        "source": parsed.source_label,
-        "url": None,
-        "doc_id": None,
-        "error": None
-    }
-
-    try:
-        if action["save_method"] == "save_url":
-            url = action["url"]
-            result["url"] = url
-            tags = ["#TG收集"]
-
-            domain = detect_domain(parsed.text)
-            domain_tag = f"@{domain}" if domain != "其他" else None
-            if domain_tag:
-                tags.append(domain_tag)
-            result["domain"] = domain
-
-            user_note = action.get("user_note")
-            if parsed.is_forward and parsed.channel_name:
-                source_note = f"來源：{parsed.channel_name}"
-                if user_note:
-                    user_note = f"{source_note}\n\n{user_note}"
-                else:
-                    user_note = source_note
-
-            doc = save_url(url=url, tags=tags, notes=user_note)
-
-            if doc:
-                result["success"] = True
-                result["doc_id"] = doc.get("id")
-                result["title"] = doc.get("title") or url[:50]
-            else:
-                result["error"] = "存入失敗"
-
-        elif action["save_method"] == "save_note":
-            content = action["content"]
-            ai_result = process_capture_content(content)
-            title = ai_result["title"]
-            domain = ai_result["domain"]
-            domain_tag = ai_result["domain_tag"]
-
-            result["title"] = title
-            result["domain"] = domain
-
-            tags = ["#TG收集"]
-            if domain_tag:
-                tags.append(domain_tag)
-
-            doc = save_note(
-                content=content,
-                title=title,
-                source_name=parsed.source_label,
-                tags=tags
-            )
-
-            if doc:
-                result["success"] = True
-                result["doc_id"] = doc.get("id")
-            else:
-                result["error"] = "存入失敗"
-
-    except Exception as e:
-        result["error"] = str(e)
-
-    return result
-
-
-def format_reply(result: dict) -> str:
-    """格式化回覆訊息"""
-    if result["success"]:
-        lines = ["<b>OK</b> 已存入 Reader"]
-
-        if result["title"]:
-            title = result["title"][:40]
-            lines.append(f"<b>{title}</b>")
-
-        if result["domain"]:
-            domain_emoji = {
-                "醫學": "🏥", "AI": "🤖", "國際": "🌍",
-                "知識": "📚", "生產力": "⚡", "生活": "🏠", "其他": "📌"
-            }
-            emoji = domain_emoji.get(result["domain"], "📌")
-            lines.append(f"{emoji} {result['domain']}")
-
-        if result["source"] and result["source"] != "我的筆記":
-            lines.append(f"📍 {result['source']}")
-
-        return "\n".join(lines)
-    else:
-        return f"Error 存入失敗\n{result.get('error', '未知錯誤')}"
+def _check_management_secret() -> bool:
+    """驗證管理 endpoint 的 secret token（#11）"""
+    if not WEBHOOK_SECRET:
+        return True  # 未設定時不強制（開發模式）
+    token = request.args.get("secret")
+    return token == WEBHOOK_SECRET
 
 
 @app.route("/", methods=["GET"])
@@ -160,13 +64,20 @@ def index():
     return jsonify({
         "status": "ok",
         "service": "Quick Capture Bot",
-        "time": datetime.now().isoformat()
+        "time": datetime.utcnow().isoformat() + "Z"
     })
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     """Telegram Webhook 端點"""
+    # Telegram Webhook Secret Token 驗證（#13）
+    if WEBHOOK_SECRET:
+        incoming_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if incoming_token != WEBHOOK_SECRET:
+            print(f"Webhook forbidden: invalid secret token")
+            return jsonify({"status": "forbidden"}), 403
+
     try:
         update = request.get_json()
 
@@ -179,7 +90,7 @@ def webhook():
                 print(f"Ignored message from unauthorized chat: {chat_id}")
                 return jsonify({"status": "ignored"})
 
-            # 處理訊息
+            # 處理訊息（使用 capture_service 共用邏輯）
             result = process_message(message)
 
             # 發送回覆
@@ -198,13 +109,19 @@ def webhook():
 @app.route("/set_webhook", methods=["GET"])
 def set_webhook():
     """設定 Webhook（部署後訪問此端點一次）"""
-    # 從請求中獲取 host
+    # 管理 endpoint 需認證（#11 #12）
+    if not _check_management_secret():
+        return jsonify({"status": "forbidden"}), 403
+
     host = request.host_url.rstrip("/")
     webhook_url = f"{host}/webhook"
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
-    response = requests.post(url, json={"url": webhook_url})
+    payload = {"url": webhook_url}
+    if WEBHOOK_SECRET:
+        payload["secret_token"] = WEBHOOK_SECRET  # 讓 Telegram 帶上 secret header
 
+    response = requests.post(url, json=payload, timeout=15)
     if response.status_code == 200:
         return jsonify({
             "status": "ok",
@@ -221,8 +138,12 @@ def set_webhook():
 @app.route("/delete_webhook", methods=["GET"])
 def delete_webhook():
     """刪除 Webhook（切換回 Polling 模式時使用）"""
+    # 管理 endpoint 需認證（#11 #12）
+    if not _check_management_secret():
+        return jsonify({"status": "forbidden"}), 403
+
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook"
-    response = requests.post(url)
+    response = requests.post(url, timeout=15)
     return jsonify(response.json())
 
 
