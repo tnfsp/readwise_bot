@@ -164,7 +164,7 @@ def test_connection():
         from config import ANTHROPIC_API_KEY
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         message = client.messages.create(
-            model="claude-sonnet-4-6-20250217",
+            model="claude-sonnet-4-6",
             max_tokens=100,
             messages=[{"role": "user", "content": "Say 'API connection successful' in Chinese"}]
         )
