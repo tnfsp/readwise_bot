@@ -2,38 +2,18 @@ name: Daily Digest Push
 
 on:
   schedule:
-    # UTC 時間，台灣時間 = UTC + 8
-    # 05:30 台灣 = 21:30 UTC (前一天)
-    - cron: '30 21 * * *'  # 醫學推播 (台灣 05:30)
-    # 06:00 台灣 = 22:00 UTC (前一天)
-    - cron: '0 22 * * *'   # AI 推播 (台灣 06:00)
-    # 07:00 台灣 = 23:00 UTC (前一天)
-    - cron: '0 23 * * *'   # 國際推播 (台灣 07:00)
-    # 08:00 台灣 = 00:00 UTC
-    - cron: '0 0 * * *'    # GitHub 推播 (台灣 08:00)
     # 09:00 台灣 = 01:00 UTC
     - cron: '0 1 * * *'    # Claude Code 更新 (台灣 09:00)
-    # 12:00 台灣 = 04:00 UTC
-    - cron: '0 4 * * *'    # 知識推播 (台灣 12:00)
-    # 20:00 台灣 = 12:00 UTC
-    - cron: '0 12 * * *'   # Readwise 精選 (台灣 20:00)
 
   workflow_dispatch:
     inputs:
       domain:
         description: 'Domain to push'
         required: true
-        default: 'all'
+        default: 'claude-code'
         type: choice
         options:
-          - medical
-          - ai
-          - international
-          - github
           - claude-code
-          - knowledge
-          - readwise
-          - all
 
 jobs:
   push-digest:
@@ -53,32 +33,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Determine domain based on schedule
-        id: determine-domain
-        run: |
-          # 如果是手動觸發，使用輸入的 domain
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "domain=${{ github.event.inputs.domain }}" >> $GITHUB_OUTPUT
-          else
-            # 根據 UTC 時間決定領域
-            HOUR=$(date -u +%H)
-            MIN=$(date -u +%M)
-            case "$HOUR:$MIN" in
-              21:3*) echo "domain=medical" >> $GITHUB_OUTPUT ;;      # 台灣 05:30
-              *)
-                case $HOUR in
-                  22) echo "domain=ai" >> $GITHUB_OUTPUT ;;           # 台灣 06:00
-                  23) echo "domain=international" >> $GITHUB_OUTPUT ;; # 台灣 07:00
-                  00) echo "domain=github" >> $GITHUB_OUTPUT ;;        # 台灣 08:00
-                  01) echo "domain=claude-code" >> $GITHUB_OUTPUT ;;   # 台灣 09:00
-                  04) echo "domain=knowledge" >> $GITHUB_OUTPUT ;;     # 台灣 12:00
-                  12) echo "domain=readwise" >> $GITHUB_OUTPUT ;;      # 台灣 20:00
-                  *)  echo "domain=all" >> $GITHUB_OUTPUT ;;
-                esac
-              ;;
-            esac
-          fi
-
       - name: Run domain digest
         env:
           READWISE_TOKEN: ${{ secrets.READWISE_TOKEN }}
@@ -87,16 +41,11 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cd scripts
-          DOMAIN="${{ steps.determine-domain.outputs.domain }}"
-          if [ "$DOMAIN" == "readwise" ]; then
-            python daily_digest.py
-          else
-            python domain_digest.py $DOMAIN
-          fi
+          python domain_digest.py claude-code
 
       - name: Summary
         run: |
           echo "### Daily Digest Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Domain: ${{ steps.determine-domain.outputs.domain }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Domain: claude-code" >> $GITHUB_STEP_SUMMARY
           echo "- Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
           echo "- Status: Success" >> $GITHUB_STEP_SUMMARY

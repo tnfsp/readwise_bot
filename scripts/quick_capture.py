@@ -24,7 +24,7 @@ if sys.platform == "win32":
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from message_parser import parse_telegram_message, determine_save_action
 from reader_client import save_url, save_note
-from ai_filter import process_capture_content, detect_domain
+from ai_filter import process_capture_content
 
 
 # ============================================================
@@ -99,15 +99,8 @@ def process_message(message: dict) -> dict:
             url = action["url"]
             result["url"] = url
 
-            # 準備 tags
-            tags = ["#TG收集"]
-
-            # 判斷領域
-            domain = detect_domain(parsed.text)
-            domain_tag = f"@{domain}" if domain != "其他" else None
-            if domain_tag:
-                tags.append(domain_tag)
-            result["domain"] = domain
+            # tags 清空
+            tags = []
 
             # 用戶評論
             user_note = action.get("user_note")
@@ -133,19 +126,14 @@ def process_message(message: dict) -> dict:
             # 純文字：存入筆記
             content = action["content"]
 
-            # 使用 AI 生成標題和判斷領域
+            # 使用 AI 生成標題
             ai_result = process_capture_content(content)
             title = ai_result["title"]
-            domain = ai_result["domain"]
-            domain_tag = ai_result["domain_tag"]
 
             result["title"] = title
-            result["domain"] = domain
 
-            # 準備 tags
-            tags = ["#TG收集"]
-            if domain_tag:
-                tags.append(domain_tag)
+            # tags 清空
+            tags = []
 
             # 存入 Reader
             doc = save_note(
