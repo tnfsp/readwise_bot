@@ -44,7 +44,7 @@ def run_daily_digest(use_ai: bool = True, dry_run: bool = False):
 
     # 2. 獲取新文章
     print("\n[2/5] 獲取新文章...")
-    articles = get_recent_documents(hours=24, location="feed")
+    articles = get_recent_documents(hours=24, location="inbox")
     print(f"  ✓ 找到 {len(articles)} 篇新文章")
 
     if not articles:
