@@ -56,6 +56,19 @@ jobs:
           cd scripts
           python daily_digest.py
 
+      - name: Persist sent releases
+        if: ${{ github.event_name == 'schedule' || inputs.task == 'all' || inputs.task == 'claude-code' }}
+        run: |
+          if git diff --quiet scripts/data/sent_releases.json 2>/dev/null; then
+            echo "No new releases to persist"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add scripts/data/sent_releases.json
+            git commit -m "[Bot] Update sent_releases.json"
+            git push
+          fi
+
       - name: Summary
         run: |
           echo "### Daily Digest Summary" >> $GITHUB_STEP_SUMMARY

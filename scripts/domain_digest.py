@@ -63,7 +63,7 @@ def is_major_or_minor(title: str) -> bool:
     stop=stop_after_attempt(2),
     wait=wait_exponential(multiplier=1, min=1, max=5),
     retry=retry_if_exception_type(Exception),
-    reraise=False
+    reraise=True
 )
 def fetch_rss_feed(url: str, hours: int = 24) -> List[Dict]:
     """從 RSS feed 獲取最近的文章"""
@@ -111,7 +111,11 @@ def fetch_domain_articles(domain: str, hours: int = 24) -> List[Dict]:
     all_articles = []
     for feed in config["feeds"]:
         print(f"  Fetching {feed['name']}...")
-        articles = fetch_rss_feed(feed["url"], hours)
+        try:
+            articles = fetch_rss_feed(feed["url"], hours)
+        except Exception as e:
+            print(f"  Failed after retries: {e}")
+            articles = []
         for article in articles:
             article["source"] = feed["name"]
         all_articles.extend(articles)
@@ -280,9 +284,7 @@ def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):
     print(f"  共找到 {len(articles)} 篇文章")
 
     if not articles:
-        print("  沒有新文章")
-        if not dry_run:
-            send_telegram_message(f"🔧 <b>Claude Code 更新</b>\n\n過去 {hours} 小時沒有新內容。")
+        print("  沒有新文章，跳過推播")
         return True
 
     # 2. 過濾：只保留 major/minor release
@@ -294,9 +296,7 @@ def run_domain_digest(domain: str, hours: int = None, dry_run: bool = False):
     print(f"  保留 {len(filtered)} 個 major/minor release")
 
     if not filtered:
-        print("  沒有 major/minor release")
-        if not dry_run:
-            send_telegram_message("🔧 <b>Claude Code 更新</b>\n\n過去一週只有 patch 更新，無 major/minor release。")
+        print("  沒有 major/minor release，跳過推播")
         return True
 
     # 2.5. 去重：排除已推播的版本
